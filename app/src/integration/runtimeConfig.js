@@ -90,6 +90,12 @@ const runtimeConfig = {
       typeof opendesk.suiteLabel === "string" && opendesk.suiteLabel.trim()
         ? opendesk.suiteLabel.trim()
         : "openDesk",
+    nextcloudUrl: normalizeUrl(opendesk.nextcloudUrl, true),
+    nextcloudFolder:
+      typeof opendesk.nextcloudFolder === "string" &&
+      opendesk.nextcloudFolder.trim()
+        ? opendesk.nextcloudFolder.trim()
+        : "Organigramme",
   },
 };
 

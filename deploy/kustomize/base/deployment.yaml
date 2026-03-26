@@ -27,8 +27,6 @@ spec:
               value: "false"
             - name: ORGANIGRAM_OPENDESK_PORTAL_URL
               value: ""
-            - name: ORGANIGRAM_OPENDESK_ICS_URL
-              value: ""
             - name: ORGANIGRAM_OPENDESK_KEYCLOAK_ISSUER_URL
               value: ""
             - name: ORGANIGRAM_OPENDESK_OIDC_CLIENT_ID
@@ -39,6 +37,20 @@ spec:
               value: "de-DE"
             - name: ORGANIGRAM_OPENDESK_SUITE_LABEL
               value: "openDesk"
+            - name: ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER
+              value: "Organigramme"
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM
+              value: "opendesk_useruuid"
+            - name: ORGANIGRAM_OPENDESK_CENTRAL_NAVIGATION_SHARED_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: organigram-opendesk-api-secrets
+                  key: central-navigation-shared-secret
+                  optional: true
           ports:
             - containerPort: 8080
               name: http

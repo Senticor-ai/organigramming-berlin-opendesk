@@ -18,6 +18,7 @@ POST_LOGOUT_REDIRECT_URI="${POST_LOGOUT_REDIRECT_URI:-https://${PUBLIC_HOST}/}"
 PORTAL_POST_LOGOUT_REDIRECT_URI="${PORTAL_POST_LOGOUT_REDIRECT_URI:-https://portal.cognitive-hive.ai/univention/portal/}"
 WEB_ORIGIN="${WEB_ORIGIN:-https://${PUBLIC_HOST}}"
 FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL:-https://${PUBLIC_HOST}/oauth2/sign_out}"
+NEXTCLOUD_CLIENT_SCOPE_NAME="${NEXTCLOUD_CLIENT_SCOPE_NAME:-opendesk-nextcloud-scope}"
 
 for required_bin in kubectl openssl base64; do
   if ! command -v "${required_bin}" >/dev/null 2>&1; then
@@ -66,6 +67,7 @@ CLIENT_SECRET="$(
     PORTAL_POST_LOGOUT_REDIRECT_URI="${PORTAL_POST_LOGOUT_REDIRECT_URI}" \
     WEB_ORIGIN="${WEB_ORIGIN}" \
     FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL}" \
+    NEXTCLOUD_CLIENT_SCOPE_NAME="${NEXTCLOUD_CLIENT_SCOPE_NAME}" \
     bash -lc '
       set -euo pipefail
       KC=/opt/keycloak/bin/kcadm.sh
@@ -124,6 +126,22 @@ EOF
           -s '"'"'config."included.client.audience"='"'"'"${CLIENT_ID}" \
           -s '"'"'config."id.token.claim"=true'"'"' \
           -s '"'"'config."access.token.claim"=true'"'"' >/dev/null
+      fi
+
+      nextcloud_scope_uuid="$(
+        "${KC}" get client-scopes -r "${KEYCLOAK_REALM}" -q name="${NEXTCLOUD_CLIENT_SCOPE_NAME}" \
+          --fields id --format csv --noquotes | tail -n1
+      )"
+      if [[ -n "${nextcloud_scope_uuid}" ]]; then
+        if ! "${KC}" get "clients/${client_uuid}/default-client-scopes" -r "${KEYCLOAK_REALM}" \
+          --fields name --format csv --noquotes | grep -Fxq "${NEXTCLOUD_CLIENT_SCOPE_NAME}"; then
+          "${KC}" update "clients/${client_uuid}/default-client-scopes/${nextcloud_scope_uuid}" \
+            -r "${KEYCLOAK_REALM}" >/dev/null
+        fi
+      else
+        printf "Warning: client scope %s not found in realm %s\n" \
+          "${NEXTCLOUD_CLIENT_SCOPE_NAME}" \
+          "${KEYCLOAK_REALM}" >&2
       fi
 
       "${KC}" get "clients/${client_uuid}/client-secret" -r "${KEYCLOAK_REALM}" \

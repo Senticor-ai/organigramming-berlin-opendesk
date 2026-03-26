@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 
+import {
+  fetchOpenDeskContext,
+  fetchOpenDeskNavigation,
+} from "./opendeskApi";
 import runtimeConfig from "./runtimeConfig";
 
 import "./OpenDeskShell.scss";
@@ -43,7 +47,7 @@ const OpenDeskShell = ({ children }) => {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [navigationItems, setNavigationItems] = useState([]);
   const [navigationState, setNavigationState] = useState("idle");
-  const [userInfo, setUserInfo] = useState(null);
+  const [context, setContext] = useState(null);
 
   useEffect(() => {
     if (!opendesk.enabled) {
@@ -52,22 +56,15 @@ const OpenDeskShell = ({ children }) => {
 
     let cancelled = false;
 
-    fetch("/oauth2/userinfo", { credentials: "same-origin" })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`userinfo request failed with ${response.status}`);
-        }
-
-        return response.json();
-      })
+    fetchOpenDeskContext()
       .then((data) => {
         if (!cancelled) {
-          setUserInfo(data);
+          setContext(data);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setUserInfo(null);
+          setContext(null);
         }
       });
 
@@ -77,7 +74,7 @@ const OpenDeskShell = ({ children }) => {
   }, [opendesk.enabled]);
 
   useEffect(() => {
-    if (!opendesk.enabled || !opendesk.icsUrl) {
+    if (!opendesk.enabled) {
       return undefined;
     }
 
@@ -94,20 +91,9 @@ const OpenDeskShell = ({ children }) => {
       setNavigationState("loading");
 
       try {
-        const response = await fetch(
-          `${opendesk.icsUrl}/navigation.json?language=${encodeURIComponent(
-            opendesk.navigationLanguage
-          )}`,
-          {
-            credentials: "include",
-          }
+        const payload = await fetchOpenDeskNavigation(
+          opendesk.navigationLanguage
         );
-
-        if (!response.ok) {
-          throw new Error(`navigation request failed with ${response.status}`);
-        }
-
-        const payload = await response.json();
         const items = normalizeNavigationItems(payload);
 
         if (!cancelled) {
@@ -136,7 +122,6 @@ const OpenDeskShell = ({ children }) => {
     };
   }, [
     opendesk.enabled,
-    opendesk.icsUrl,
     opendesk.navigationLanguage,
   ]);
 
@@ -146,14 +131,6 @@ const OpenDeskShell = ({ children }) => {
 
   return (
     <div className="opendesk-shell">
-      {opendesk.icsUrl && (
-        <iframe
-          className="opendesk-shell__silent-frame"
-          src={`${opendesk.icsUrl}/silent`}
-          title="openDesk silent login"
-        />
-      )}
-
       <header className="opendesk-shell__header">
         <div className="opendesk-shell__brand">
           <button
@@ -176,8 +153,16 @@ const OpenDeskShell = ({ children }) => {
         </div>
 
         <div className="opendesk-shell__actions">
-          {userInfo?.email && (
-            <span className="opendesk-shell__identity">{userInfo.email}</span>
+          {context?.user?.displayName && (
+            <span className="opendesk-shell__identity">
+              {context.user.displayName}
+              {context.user.email ? ` · ${context.user.email}` : ""}
+            </span>
+          )}
+          {opendesk.nextcloudUrl && (
+            <a className="opendesk-shell__action-link" href={opendesk.nextcloudUrl}>
+              Dateien
+            </a>
           )}
           {opendesk.portalUrl && (
             <a

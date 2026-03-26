@@ -7,6 +7,8 @@ window.__ORGANIGRAM_CONFIG__ = {
     oidcClientId: "organigram",
     postLogoutRedirectUrl: "",
     navigationLanguage: "de-DE",
-    suiteLabel: "openDesk"
+    suiteLabel: "openDesk",
+    nextcloudUrl: "",
+    nextcloudFolder: "Organigramme"
   }
 };

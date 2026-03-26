@@ -13,8 +13,6 @@ spec:
               value: "true"
             - name: ORGANIGRAM_OPENDESK_PORTAL_URL
               value: "https://portal.cognitive-hive.ai/univention/portal/"
-            - name: ORGANIGRAM_OPENDESK_ICS_URL
-              value: "https://ics.cognitive-hive.ai"
             - name: ORGANIGRAM_OPENDESK_KEYCLOAK_ISSUER_URL
               value: "https://id.cognitive-hive.ai/realms/opendesk"
             - name: ORGANIGRAM_OPENDESK_OIDC_CLIENT_ID
@@ -25,3 +23,11 @@ spec:
               value: "de-DE"
             - name: ORGANIGRAM_OPENDESK_SUITE_LABEL
               value: "openDesk"
+            - name: ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL
+              value: "http://ums-portal-server.opendesk.svc.cluster.local/portal"
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_URL
+              value: "https://drive.cognitive-hive.ai"
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER
+              value: "Organigramme"
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM
+              value: "opendesk_useruuid"

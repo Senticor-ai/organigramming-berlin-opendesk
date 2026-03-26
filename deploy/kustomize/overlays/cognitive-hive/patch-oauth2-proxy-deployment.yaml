@@ -24,3 +24,5 @@ spec:
             - --cookie-samesite=lax
             - --reverse-proxy=true
             - --skip-provider-button=true
+            - --pass-access-token=true
+            - --pass-user-headers=true

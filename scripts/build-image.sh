@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-IMAGE_REPO="${IMAGE_REPO:-ghcr.io/senticor-ai/organigramming-berlin-opendesk}"
+IMAGE_REPO="${IMAGE_REPO:-registry.onstackit.cloud/senticor/organigram}"
 IMAGE_TAG="${IMAGE_TAG:-$(git -C "${ROOT_DIR}" rev-parse --short HEAD 2>/dev/null || echo dev)}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH="${PUSH:-false}"
@@ -30,4 +30,3 @@ fi
 "${cmd[@]}"
 
 printf 'Built %s:%s\n' "${IMAGE_REPO}" "${IMAGE_TAG}"
-

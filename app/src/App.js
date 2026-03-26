@@ -27,6 +27,7 @@ import JSONDigger from "./services/jsonDigger";
 import { getJoyrideSettings } from "./lib/getJoyrideSettings";
 import OpenDeskShell from "./integration/OpenDeskShell";
 import runtimeConfig from "./integration/runtimeConfig";
+import { saveNextcloudDocument } from "./integration/opendeskApi";
 
 const initdata = () => {
   let doc = initDocument;
@@ -136,6 +137,20 @@ const App = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const onSaveToNextcloud = async (
+    includeLogo = true,
+    excludePersonalData = false
+  ) => {
+    const dataCopy = excludePersonalData ? removePersonProps(data) : data;
+    const fileName =
+      dataCopy.export.filename || toSnakeCase(dataCopy.document.title);
+    const exportData = includeLogo
+      ? { ...dataCopy }
+      : { ...dataCopy, document: { ...dataCopy.document, logo: "" } };
+
+    return saveNextcloudDocument(fileName, exportData);
   };
 
   const exportTo = (fileextension, includeLogo = true, pdfType = "") => {
@@ -403,6 +418,7 @@ const App = () => {
               setSelected={(e) => setSelected(e)}
               onExport={exportTo}
               onSave={onSave}
+              onSaveToNextcloud={onSaveToNextcloud}
               onUndo={setUndo}
               onRedo={setRedo}
               enableUndo={canUndo}

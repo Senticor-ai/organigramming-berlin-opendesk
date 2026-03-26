@@ -13,11 +13,19 @@ integration path.
 - container image build via [Dockerfile](./Dockerfile)
 - Kubernetes manifests under [deploy/kustomize](./deploy/kustomize)
 - `oauth2-proxy` and Keycloak bootstrap helpers under [scripts](./scripts)
+- a small runtime server for same-origin integration APIs
 - runtime-configured openDesk shell mode documented in
   [docs/runtime-configuration.md](./docs/runtime-configuration.md)
 - openDesk integration notes in
   [docs/opendesk-integration.md](./docs/opendesk-integration.md)
 - upstream maintenance notes in [docs/upstream-sync.md](./docs/upstream-sync.md)
+
+In openDesk mode the fork now supports:
+
+- the documented Nubus Central Navigation API
+- front-channel Keycloak logout wiring for companion-app sign-out
+- Nextcloud JSON save/open in a user folder on the same signed-in session
+  using the `opendesk_useruuid` claim from the openDesk realm
 
 ## Quick start
 

@@ -5,12 +5,20 @@ import emptyDocument from "../../data/emptyDocument";
 import AlertModal from "./AlertModal";
 import { validateData } from "../../services/service";
 import { upgradeDataStructure } from "../../services/upgradeDataStructure";
+import runtimeConfig from "../../integration/runtimeConfig";
+import {
+  listNextcloudDocuments,
+  loadNextcloudDocument,
+} from "../../integration/opendeskApi";
 
 const NewDocumetModal = (props) => {
   const [alertModalShow, setAlertModalShow] = useState(false);
   const [hideModal, setHideModal] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importData, setImportData] = useState(null);
+  const [nextcloudDocuments, setNextcloudDocuments] = useState([]);
+  const [nextcloudLoading, setNextcloudLoading] = useState(false);
+  const [nextcloudError, setNextcloudError] = useState(null);
 
   const onCreateNew = () => {
     setHideModal(true);
@@ -61,6 +69,49 @@ const NewDocumetModal = (props) => {
     reader.readAsText(e.target.files[0]);
   };
 
+  const openFromNextcloud = async () => {
+    setNextcloudLoading(true);
+    setNextcloudError(null);
+
+    try {
+      const payload = await listNextcloudDocuments();
+      setNextcloudDocuments(payload?.documents || []);
+    } catch (error) {
+      setNextcloudDocuments([]);
+      setNextcloudError(error.message);
+    } finally {
+      setNextcloudLoading(false);
+    }
+  };
+
+  const importNextcloudDocument = async (fileName) => {
+    setNextcloudLoading(true);
+    setNextcloudError(null);
+
+    try {
+      const data = await loadNextcloudDocument(fileName);
+      const upgraded = upgradeDataStructure(data);
+      const [valid, errors] = validateData(upgraded);
+
+      if (!valid) {
+        setNextcloudError(
+          `Das Dokument aus Nextcloud ist ungültig: ${errors
+            .map((error) => JSON.stringify(error))
+            .join(", ")}`
+        );
+        return;
+      }
+
+      setImportData(upgraded);
+      setHideModal(true);
+      setAlertModalShow(true);
+    } catch (error) {
+      setNextcloudError(error.message);
+    } finally {
+      setNextcloudLoading(false);
+    }
+  };
+
   return (
     <>
       <AlertModal
@@ -98,6 +149,53 @@ const NewDocumetModal = (props) => {
                 <Button onClick={onCreateNew}>Neues Dokument erstellen</Button>
               </Col>
             </Row>
+            {runtimeConfig.opendesk.enabled && runtimeConfig.opendesk.nextcloudUrl && (
+              <>
+                <Row>
+                  <Col className="mb-3">
+                    <Button
+                      variant="outline-primary"
+                      onClick={() => openFromNextcloud()}
+                      disabled={nextcloudLoading}
+                    >
+                      {nextcloudLoading
+                        ? "Nextcloud wird geladen..."
+                        : "Aus Nextcloud öffnen"}
+                    </Button>
+                  </Col>
+                </Row>
+                {(nextcloudError || nextcloudDocuments.length > 0) && (
+                  <Row>
+                    <Col className="mb-3">
+                      {nextcloudError && (
+                        <Alert variant="danger">{nextcloudError}</Alert>
+                      )}
+                      {nextcloudDocuments.length > 0 && (
+                        <div className="border rounded p-3">
+                          <strong>
+                            Dateien in /{runtimeConfig.opendesk.nextcloudFolder}
+                          </strong>
+                          <div className="mt-3 d-grid gap-2">
+                            {nextcloudDocuments.map((document) => (
+                              <Button
+                                key={document.fileName}
+                                variant="light"
+                                className="text-start"
+                                onClick={() =>
+                                  importNextcloudDocument(document.fileName)
+                                }
+                              >
+                                {document.fileName}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Col>
+                  </Row>
+                )}
+              </>
+            )}
             <Row>
               <Col className="my-1">
                 <Form.Group controlId="formFile" className="mb-3">

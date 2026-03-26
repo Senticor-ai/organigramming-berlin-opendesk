@@ -1,31 +1,33 @@
 # openDesk Integration
 
 This fork keeps the upstream Berlin organigram application intact and adds the
-minimum infrastructure required to expose it as a companion tool in an
-openDesk/Nubus environment:
+infrastructure and runtime glue required to expose it as a companion tool in
+an openDesk/Nubus environment:
 
 - container image build
 - Kubernetes manifests
 - `oauth2-proxy` in front of the SPA
 - Keycloak client bootstrap against the existing openDesk realm
+- a small Node runtime that serves the frontend and same-origin integration APIs
 - a feature-flagged openDesk shell mode in the frontend
 - a portal tile pointing to the public host
 
 ## Architecture
 
-The integration model is still intentionally shallow, but no longer just a
-plain tile link:
+The integration model is no longer just a plain tile link:
 
 - the app runs in its own `organigram` namespace
-- the app remains a static frontend with browser-local working state
-- openDesk Keycloak is used only for access control
+- the frontend still stays close to upstream
+- a runtime server adds openDesk-aware endpoints on the same origin
+- openDesk Keycloak is used for access control
 - users reach it through a normal Nubus portal entry
-- when enabled, the same image can expose an openDesk-flavored shell with
-  logout and central-navigation hooks
+- the openDesk shell uses the documented Central Navigation API through the
+  in-cluster portal server, not the older ICS/browser-side approximation
+- JSON documents can be saved to and opened from the signed-in user’s
+  Nextcloud account under a dedicated folder
 
-That means you get SSO-gated access without pretending the app already supports
-deeper openDesk features such as shared storage, LDAP-backed data, or embedded
-navigation.
+This keeps the application reasonably upstream-friendly while still making it
+behave like part of the openDesk experience.
 
 ## DNS
 
@@ -56,7 +58,7 @@ PUSH=true ./scripts/build-image.sh
 The default image target is:
 
 ```text
-ghcr.io/senticor-ai/organigramming-berlin-opendesk:<git-sha>
+registry.onstackit.cloud/senticor/organigram:<git-sha>
 ```
 
 Override `IMAGE_REPO`, `IMAGE_TAG`, or `PLATFORM` if needed.
@@ -85,6 +87,8 @@ The bootstrap now configures the client for:
 
 - front-channel logout back to `https://organigram.<host>/oauth2/sign_out`
 - post-logout redirects to both the organigram host and the portal URL
+- the default client scope `opendesk-nextcloud-scope` so bearer tokens include
+  `opendesk_useruuid` for Nextcloud WebDAV access
 
 The example `oauth2-proxy` configuration in this repo also enables
 `--insecure-oidc-allow-unverified-email=true`. That is intentional for openDesk
@@ -96,6 +100,27 @@ It also enables:
 - `--code-challenge-method=S256`
 - `--whitelist-domain=.cognitive-hive.ai` in the concrete overlay so logout
   redirects can pass through Keycloak and back to the portal
+- `--pass-access-token=true`
+- `--pass-user-headers=true`
+
+The access token passthrough is required for the server-side Nextcloud proxy.
+
+## Bootstrap Central Navigation access
+
+The documented Central Navigation API requires a shared secret from the portal
+server. The helper copies it into the `organigram` namespace:
+
+```bash
+./scripts/bootstrap-opendesk-api-secrets.sh
+```
+
+This creates or updates:
+
+- Kubernetes secret `organigram/organigram-opendesk-api-secrets`
+
+with:
+
+- `central-navigation-shared-secret`
 
 ## Apply the manifests
 
@@ -116,9 +141,12 @@ The overlay enables the runtime shell mode with:
 
 - `ORGANIGRAM_OPENDESK_ENABLED=true`
 - `ORGANIGRAM_OPENDESK_PORTAL_URL=https://portal.cognitive-hive.ai/univention/portal/`
-- `ORGANIGRAM_OPENDESK_ICS_URL=https://ics.cognitive-hive.ai`
 - `ORGANIGRAM_OPENDESK_KEYCLOAK_ISSUER_URL=https://id.cognitive-hive.ai/realms/opendesk`
 - `ORGANIGRAM_OPENDESK_POST_LOGOUT_REDIRECT_URL=https://portal.cognitive-hive.ai/univention/portal/`
+- `ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL=http://ums-portal-server.opendesk.svc.cluster.local/portal`
+- `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL=https://drive.cognitive-hive.ai`
+- `ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER=Organigramme`
+- `ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM=opendesk_useruuid`
 
 See also [runtime-configuration.md](./runtime-configuration.md).
 
@@ -130,18 +158,18 @@ kubectl -n organigram rollout status deployment/oauth2-proxy
 ./scripts/smoke.sh
 ```
 
-## Add the Nubus portal entry
+## Portal and central navigation
 
-In the Nubus portal editor add a tile that points to the companion host:
+This fork assumes the operator creates or reconciles two portal aspects:
 
-- title: `Organigramme`
-- description: `Verwaltungsorganigramme erstellen und bearbeiten`
-- URL: `https://organigram.cognitive-hive.ai/`
+- the visible portal tile
+- the `centralNavigation` list on the portal object
+
+The infra repo that consumes this fork automates both through UDM.
 
 ## Current limitations
 
-- working state is still stored in the browser until users export files
-- JSON, PDF, PNG, SVG, and RDF export still use browser downloads
-- Nextcloud, xWiki, and other deep openDesk integrations are not part of this fork
-- central navigation is best-effort through ICS and depends on ICS being reachable
-- direct host access is SSO-gated, but the application itself stays stateless
+- working state is still cached in the browser between edits
+- JSON save/open is integrated with Nextcloud, but PDF/PNG/SVG/RDF still use browser downloads
+- the shell is integrated, but the app is not embedded into the Nubus portal frontend itself
+- the Provisioning API is not used yet; it is a likely next step for directory-driven templates or org-sync features

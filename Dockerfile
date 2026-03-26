@@ -10,19 +10,18 @@ RUN yarn install --frozen-lockfile --ignore-engines
 COPY app/ ./
 RUN yarn build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM node:20-alpine AS runtime
 
-USER root
-RUN apk add --no-cache gettext
+WORKDIR /srv
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /src/app/build /usr/share/nginx/html
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY server/package.json ./server/package.json
+RUN cd server && npm install --omit=dev
 
-RUN chmod +x /docker-entrypoint.sh
+COPY server ./server
+COPY --from=build /src/app/build ./public
 
-USER 101
+ENV PORT=8080
 
 EXPOSE 8080
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["node", "server/server.js"]

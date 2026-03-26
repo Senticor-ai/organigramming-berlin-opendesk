@@ -3,6 +3,7 @@ import { Button, Modal, Row, Col, Alert } from "react-bootstrap";
 import ObjectFieldTemplate from "../From/ObjectFieldTemplate";
 import { toSnakeCase } from "../../services/service";
 import checkForDuplicatePersons from "../../services/checkForDuplicatePersons";
+import runtimeConfig from "../../integration/runtimeConfig";
 
 import Form from "@rjsf/bootstrap-4";
 
@@ -15,6 +16,8 @@ const ExportModal = (props) => {
   const [showRDFInfo, setShowRDFInfo] = useState(false);
   const [warningMultiMainOrgs, setWarningMultiMainOrgs] = useState(false);
   const [duplicatePersons, setDuplicatePersons] = useState([]);
+  const [nextcloudError, setNextcloudError] = useState(null);
+  const [nextcloudSaving, setNextcloudSaving] = useState(false);
 
   const properties = {
     properties: {
@@ -130,6 +133,24 @@ const ExportModal = (props) => {
       }
     }
     props.onHide();
+  };
+
+  const onSaveToNextcloud = async () => {
+    setNextcloudError(null);
+    setNextcloudSaving(true);
+
+    try {
+      onBlur();
+      await props.onSaveToNextcloud(
+        formData.export.includeLogo,
+        formData.export?.excludePersonalData
+      );
+      props.onHide();
+    } catch (error) {
+      setNextcloudError(error.message);
+    } finally {
+      setNextcloudSaving(false);
+    }
   };
 
   const onBlur = () => {
@@ -251,11 +272,31 @@ const ExportModal = (props) => {
             </Col>
           </Row>
         )}
+        {nextcloudError && (
+          <Row>
+            <Col className="mb-3">
+              <Alert variant="danger">{nextcloudError}</Alert>
+            </Col>
+          </Row>
+        )}
       </Modal.Body>
       <Modal.Footer>
         <Button className="btn btn-danger" onClick={props.onHide}>
           Abbrechen
         </Button>
+        {runtimeConfig.opendesk.enabled &&
+          runtimeConfig.opendesk.nextcloudUrl &&
+          formData &&
+          formData.export &&
+          formData.export.saveExport !== "export" && (
+            <Button
+              variant="outline-primary"
+              onClick={onSaveToNextcloud}
+              disabled={nextcloudSaving}
+            >
+              {nextcloudSaving ? "Speichert..." : "In Nextcloud speichern"}
+            </Button>
+          )}
         <Button
           onClick={onExport}
           disabled={showRDFInfo && warningMultiMainOrgs}
