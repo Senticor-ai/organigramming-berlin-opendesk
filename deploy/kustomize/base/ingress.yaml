@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: organigram
+  namespace: organigram
+  labels:
+    app.kubernetes.io/name: organigram
+    app.kubernetes.io/part-of: organigram-opendesk
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - organigram.example.com
+      secretName: organigram-example-com-tls
+  rules:
+    - host: organigram.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
+

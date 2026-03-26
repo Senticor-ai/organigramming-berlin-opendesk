@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: organigram
+  namespace: organigram
+spec:
+  ingressClassName: haproxy
+  tls:
+    - hosts:
+        - organigram.cognitive-hive.ai
+      secretName: organigram-cognitive-hive-ai-tls
+  rules:
+    - host: organigram.cognitive-hive.ai
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
+

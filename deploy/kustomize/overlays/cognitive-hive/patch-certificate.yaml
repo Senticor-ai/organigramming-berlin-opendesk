@@ -1,0 +1,10 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: organigram-public
+  namespace: organigram
+spec:
+  secretName: organigram-cognitive-hive-ai-tls
+  dnsNames:
+    - organigram.cognitive-hive.ai
+

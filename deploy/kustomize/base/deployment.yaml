@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: organigram
+  namespace: organigram
+  labels:
+    app.kubernetes.io/name: organigram
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: organigram-opendesk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: organigram
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: organigram
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: organigram-opendesk
+    spec:
+      containers:
+        - name: organigram
+          image: ghcr.io/senticor-ai/organigramming-berlin-opendesk:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+

@@ -2,6 +2,46 @@
 
 # Organigramm-Tool
 
+This repository is prepared to become the Senticor-maintained public fork of
+[`technologiestiftung/organigramming-berlin`](https://github.com/technologiestiftung/organigramming-berlin).
+The application code stays close to upstream; the added value in this fork is
+the container build, Kubernetes deployment overlays, and the openDesk/Nubus
+integration path.
+
+## What this fork adds
+
+- container image build via [Dockerfile](./Dockerfile)
+- Kubernetes manifests under [deploy/kustomize](./deploy/kustomize)
+- `oauth2-proxy` and Keycloak bootstrap helpers under [scripts](./scripts)
+- openDesk integration notes in
+  [docs/opendesk-integration.md](./docs/opendesk-integration.md)
+- upstream maintenance notes in [docs/upstream-sync.md](./docs/upstream-sync.md)
+
+## Quick start
+
+### Run the app locally
+
+```bash
+cd app
+yarn install
+yarn start
+```
+
+### Build the container image
+
+```bash
+./scripts/build-image.sh
+```
+
+### Deploy behind openDesk SSO
+
+```bash
+./scripts/apply-opendesk.sh
+```
+
+The concrete openDesk example overlay for the current cognitive-hive setup lives
+in [deploy/kustomize/overlays/cognitive-hive](./deploy/kustomize/overlays/cognitive-hive).
+
 **Notice: This application and the documentation is still a work in progress.**
 
 ## A simple organisation chart application for public service of Berlin

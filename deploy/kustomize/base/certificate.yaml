@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: organigram-public
+  namespace: organigram
+  labels:
+    app.kubernetes.io/name: organigram
+    app.kubernetes.io/part-of: organigram-opendesk
+spec:
+  secretName: organigram-example-com-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - organigram.example.com
+
