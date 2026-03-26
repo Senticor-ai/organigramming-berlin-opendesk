@@ -2,7 +2,7 @@ FROM node:20-alpine AS build
 
 ENV NODE_OPTIONS=--openssl-legacy-provider
 
-RUN npm install -g yarn@1.22.22
+RUN npm install -g yarn@1.22.22 --force
 
 WORKDIR /src/app
 
@@ -18,4 +18,3 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/app/build /usr/share/nginx/html
 
 EXPOSE 8080
-
