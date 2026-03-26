@@ -77,40 +77,34 @@ CLIENT_SECRET="$(
           --fields id --format csv --noquotes | tail -n1
       )"
 
-      redirect_uris="[\"${REDIRECT_URI}\"]"
-      web_origins="[\"${WEB_ORIGIN}\"]"
+      cat > /tmp/organigram-client.json <<EOF
+      {
+        "clientId": "${CLIENT_ID}",
+        "name": "${CLIENT_ID}",
+        "enabled": true,
+        "protocol": "openid-connect",
+        "publicClient": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": false,
+        "serviceAccountsEnabled": false,
+        "redirectUris": ["${REDIRECT_URI}"],
+        "webOrigins": ["${WEB_ORIGIN}"],
+        "attributes": {
+          "post.logout.redirect.uris": "${POST_LOGOUT_REDIRECT_URI}"
+        }
+      }
+EOF
 
       if [[ -z "${client_uuid}" ]]; then
-        "${KC}" create clients -r "${KEYCLOAK_REALM}" \
-          -s clientId="${CLIENT_ID}" \
-          -s name="${CLIENT_ID}" \
-          -s enabled=true \
-          -s protocol=openid-connect \
-          -s publicClient=false \
-          -s standardFlowEnabled=true \
-          -s implicitFlowEnabled=false \
-          -s directAccessGrantsEnabled=false \
-          -s serviceAccountsEnabled=false \
-          -s "redirectUris=${redirect_uris}" \
-          -s "webOrigins=${web_origins}" \
-          -s "attributes.post.logout.redirect.uris=${POST_LOGOUT_REDIRECT_URI}" >/dev/null
+        "${KC}" create clients -r "${KEYCLOAK_REALM}" -f /tmp/organigram-client.json >/dev/null
 
         client_uuid="$(
           "${KC}" get clients -r "${KEYCLOAK_REALM}" -q clientId="${CLIENT_ID}" \
             --fields id --format csv --noquotes | tail -n1
         )"
       else
-        "${KC}" update "clients/${client_uuid}" -r "${KEYCLOAK_REALM}" \
-          -s enabled=true \
-          -s protocol=openid-connect \
-          -s publicClient=false \
-          -s standardFlowEnabled=true \
-          -s implicitFlowEnabled=false \
-          -s directAccessGrantsEnabled=false \
-          -s serviceAccountsEnabled=false \
-          -s "redirectUris=${redirect_uris}" \
-          -s "webOrigins=${web_origins}" \
-          -s "attributes.post.logout.redirect.uris=${POST_LOGOUT_REDIRECT_URI}" >/dev/null
+        "${KC}" update "clients/${client_uuid}" -r "${KEYCLOAK_REALM}" -f /tmp/organigram-client.json >/dev/null
       fi
 
       mapper_name="audience-${CLIENT_ID}"
@@ -142,4 +136,3 @@ printf 'Reconciled %s/%s for client %s via %s\n' \
   "${SECRET_NAME}" \
   "${CLIENT_ID}" \
   "${KEYCLOAK_ISSUER_URL}"
-
