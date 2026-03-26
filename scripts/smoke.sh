@@ -5,6 +5,7 @@ HOST="${HOST:-organigram.cognitive-hive.ai}"
 URL="${URL:-https://${HOST}/}"
 ENDPOINT_DIRECT_IP="${ENDPOINT_DIRECT_IP:-}"
 EXPECTED_ISSUER="${EXPECTED_ISSUER:-https://id.cognitive-hive.ai/realms/opendesk}"
+EXPECTED_AUTH_PREFIX="${EXPECTED_ISSUER}/protocol/openid-connect/auth"
 
 head_cmd=(curl -fsSIL)
 
@@ -21,6 +22,11 @@ entry_location="$(
 if [[ -z "${entry_location}" ]]; then
   echo "FAIL: entrypoint did not return a redirect location" >&2
   exit 1
+fi
+
+if [[ "${entry_location}" == *"${EXPECTED_AUTH_PREFIX}"* ]]; then
+  echo "PASS: organigram redirects unauthenticated users into openDesk SSO"
+  exit 0
 fi
 
 if [[ "${entry_location}" != *"/oauth2/"* ]]; then
@@ -41,11 +47,10 @@ oauth_location="$(
   grep -i '^location:' <<<"${oauth_headers}" | tail -n1 | cut -d' ' -f2- | tr -d '\r'
 )"
 
-if [[ "${oauth_location}" != *"${EXPECTED_ISSUER}/protocol/openid-connect/auth"* ]]; then
+if [[ "${oauth_location}" != *"${EXPECTED_AUTH_PREFIX}"* ]]; then
   echo "FAIL: oauth2-proxy did not redirect to the expected Keycloak realm" >&2
   printf 'Observed location: %s\n' "${oauth_location}" >&2
   exit 1
 fi
 
 echo "PASS: organigram redirects unauthenticated users into openDesk SSO"
-
