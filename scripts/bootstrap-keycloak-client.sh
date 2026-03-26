@@ -120,7 +120,7 @@ EOF
       fi
 
       "${KC}" get "clients/${client_uuid}/client-secret" -r "${KEYCLOAK_REALM}" \
-        --fields value | awk '"'"'/\"value\" *:/ {gsub(/[\",]/, \"\", $3); print $3; exit}'"'"'
+        --fields value | sed -n '"'"'s/.*"value" *: *"\([^"]*\)".*/\1/p'"'"' | head -n1
     '
 )"
 
