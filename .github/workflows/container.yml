@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: senticor000-github-runner
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
