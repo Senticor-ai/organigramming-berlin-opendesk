@@ -1,0 +1,254 @@
+@import "../../node_modules/bootstrap/scss/functions";
+@import "../theme";
+
+.opendesk-shell {
+  --organigram-shell-offset: 4.75rem;
+  min-height: 100vh;
+}
+
+.opendesk-shell__silent-frame {
+  display: none;
+}
+
+.opendesk-shell__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--organigram-shell-offset);
+  padding: 0.875rem 1.25rem;
+  background:
+    radial-gradient(circle at top left, rgba($primary, 0.12), transparent 40%),
+    linear-gradient(180deg, rgba($white, 0.98), rgba($white, 0.94));
+  border-bottom: 1px solid rgba($gray-500, 0.28);
+  box-shadow: 0 12px 30px rgba($gray-700, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.opendesk-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.opendesk-shell__waffle {
+  display: grid;
+  grid-template-columns: repeat(3, 0.35rem);
+  gap: 0.28rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.85rem;
+  background: $white;
+  box-shadow: 0 10px 24px rgba($gray-700, 0.12);
+
+  span {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 999px;
+    background-color: $gray-700;
+  }
+}
+
+.opendesk-shell__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.opendesk-shell__suite-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $primary;
+}
+
+.opendesk-shell__title {
+  color: $gray-800;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.opendesk-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.opendesk-shell__identity {
+  color: $gray-700;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.opendesk-shell__action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  background: rgba($primary, 0.08);
+  color: $primary;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.opendesk-shell__action-link--logout {
+  background: rgba($gray-700, 0.08);
+  color: $gray-800;
+}
+
+.opendesk-shell__content {
+  position: relative;
+}
+
+.opendesk-shell__switcher {
+  position: fixed;
+  top: calc(var(--organigram-shell-offset) + 0.75rem);
+  left: 1rem;
+  z-index: 1190;
+  width: min(68rem, calc(100vw - 2rem));
+  max-height: calc(100vh - var(--organigram-shell-offset) - 2rem);
+  padding: 1.2rem;
+  overflow: auto;
+  border: 1px solid rgba($gray-500, 0.25);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at top left, rgba($primary, 0.08), transparent 32%),
+    rgba($white, 0.97);
+  box-shadow: 0 28px 60px rgba($gray-800, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.5rem) scale(0.98);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.opendesk-shell__switcher.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.opendesk-shell__switcher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+    color: $gray-800;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+}
+
+.opendesk-shell__close {
+  border: 0;
+  background: transparent;
+  color: $gray-700;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.opendesk-shell__status {
+  margin: 0 0 1rem;
+  color: $gray-700;
+  font-size: 0.95rem;
+}
+
+.opendesk-shell__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1rem;
+}
+
+.opendesk-shell__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  min-height: 9rem;
+  padding: 1.15rem 0.9rem;
+  border-radius: 1.25rem;
+  background: $white;
+  box-shadow:
+    inset 0 0 0 1px rgba($gray-400, 0.6),
+    0 14px 28px rgba($gray-800, 0.08);
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.opendesk-shell__tile:hover {
+  transform: translateY(-0.12rem);
+  box-shadow:
+    inset 0 0 0 1px rgba($gray-400, 0.6),
+    0 18px 34px rgba($gray-800, 0.12);
+}
+
+.opendesk-shell__tile-icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.opendesk-shell__tile-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, $primary, $secondary);
+  color: $white;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.opendesk-shell__tile-label {
+  color: $gray-800;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .opendesk-shell {
+    --organigram-shell-offset: 6.4rem;
+  }
+
+  .opendesk-shell__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .opendesk-shell__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .opendesk-shell__switcher {
+    left: 0.75rem;
+    width: calc(100vw - 1.5rem);
+  }
+}

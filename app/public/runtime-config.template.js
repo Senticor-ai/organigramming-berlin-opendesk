@@ -1,0 +1,12 @@
+window.__ORGANIGRAM_CONFIG__ = {
+  opendesk: {
+    enabled: "${ORGANIGRAM_OPENDESK_ENABLED}",
+    portalUrl: "${ORGANIGRAM_OPENDESK_PORTAL_URL}",
+    icsUrl: "${ORGANIGRAM_OPENDESK_ICS_URL}",
+    keycloakIssuerUrl: "${ORGANIGRAM_OPENDESK_KEYCLOAK_ISSUER_URL}",
+    oidcClientId: "${ORGANIGRAM_OPENDESK_OIDC_CLIENT_ID}",
+    postLogoutRedirectUrl: "${ORGANIGRAM_OPENDESK_POST_LOGOUT_REDIRECT_URL}",
+    navigationLanguage: "${ORGANIGRAM_OPENDESK_NAVIGATION_LANGUAGE}",
+    suiteLabel: "${ORGANIGRAM_OPENDESK_SUITE_LABEL}"
+  }
+};

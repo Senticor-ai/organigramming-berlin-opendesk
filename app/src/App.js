@@ -25,6 +25,8 @@ import { getExternalData } from "./services/getExternalData";
 
 import JSONDigger from "./services/jsonDigger";
 import { getJoyrideSettings } from "./lib/getJoyrideSettings";
+import OpenDeskShell from "./integration/OpenDeskShell";
+import runtimeConfig from "./integration/runtimeConfig";
 
 const initdata = () => {
   let doc = initDocument;
@@ -44,6 +46,12 @@ const initdata = () => {
 };
 
 const App = () => {
+  const appClasses = ["App"];
+
+  if (runtimeConfig.opendesk.enabled) {
+    appClasses.push("App--opendesk");
+  }
+
   const chart = useRef();
   const controlLayer = useRef();
   const [selected, setSelected] = useState(null);
@@ -259,161 +267,163 @@ const App = () => {
 
   return (
     <div
-      className="App"
+      className={appClasses.join(" ")}
       onKeyDown={handleKeyDown}
       onDrop={(e) => handleDrop(e)}
       onDragOver={(e) => handleDragOver(e)}
       onDragEnter={(e) => handleDragEnter(e)}
       onDragLeave={(e) => handleDragLeave(e)}
     >
-      <Joyride
-        callback={handleJoyrideCallback}
-        continuous
-        run={run}
-        scrollToFirstStep
-        showProgress
-        showSkipButton
-        stepIndex={stepIndex}
-        steps={steps}
-        locale={{
-          back: "Zurück",
-          close: "Verlassen",
-          last: "Ende",
-          next: "Weiter",
-          skip: "Tour verlassen",
-        }}
-        styles={{
-          options: { primaryColor: "#132458" },
-          tooltip: {
-            borderRadius: ".2rem",
-          },
-          tooltipContainer: {
-            textAlign: "left",
-          },
-          tooltipTitle: {
-            margin: 0,
-          },
-          tooltipContent: {
-            padding: "1rem 0",
-          },
-          buttonNext: {
-            borderRadius: ".2rem",
-            color: "#fff",
-          },
-          buttonBack: {
-            marginRight: ".2rem",
-          },
-        }}
-      />
-
-      <AlertModal
-        show={dataURL}
-        onHide={() => {
-          setDataURL(null);
-        }}
-        saveButton={"importieren"}
-        onSave={async () => {
-          const { error, data } = await getExternalData(dataURL);
-          console.log(error, data);
-          if (error) {
-            setImportError(error);
-          } else {
-            setDataURL(null);
-            setData(data);
-          }
-        }}
-        title="Externe Daten importieren"
-      >
-        Möchten Sie die Datei <b>{getFileNameFromURL(dataURL)}</b> von der
-        folgenden Quelle importieren?
-        <br></br> <br></br>
-        <i>{dataURL}</i>
-        <br></br> <br></br>
-      </AlertModal>
-
-      <AlertModal
-        show={droppedData}
-        onHide={() => {
-          setDroppedData(null);
-        }}
-        saveButton={"Importieren"}
-        onSave={() => {
-          onChange(droppedData);
-          setDroppedData(null);
-        }}
-        title="Dokument importieren"
-      >
-        Wenn Sie ein neues Dokument öffnen, gehen ungespeicherte Änderungen an
-        ihrem aktuellen Dokument verloren.
-      </AlertModal>
-
-      <AlertModal
-        show={dataUrlError}
-        onHide={() => {
-          setDataUrlError(null);
-        }}
-        title="Import Fehlgeschlagen"
-      >
-        <Alert variant="danger">
-          Möchten Sie eine externe URL laden? Sie haben über den Parameter
-          "dataurl" in der URL eine externe Quelle angegeben. Diese Quelle ist
-          fehlerhaft:
-          {dataUrlError?.map((error, i) => (
-            <div key={"error-" + i} className="my-2">
-              {error}
-            </div>
-          ))}
-          Bitte überprüfen Sie die URL.
-        </Alert>
-      </AlertModal>
-
-      <AlertModal
-        show={importError}
-        onHide={() => {
-          setImportError(null);
-        }}
-        title="Import Fehlgeschlagen"
-      >
-        <Alert variant="danger">
-          Beim öffnen der Datei ist ein Fehler aufgetreten:
-          {importError?.map((error, i) => (
-            <div key={"error-" + i} className="my-2">
-              {JSON.stringify(error, null, " ")}
-            </div>
-          ))}
-        </Alert>
-      </AlertModal>
-
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Container className="control-layer" fluid>
-          <Sidebar
-            data={data}
-            dsDigger={dsDigger}
-            sendDataUp={onChange}
-            selected={selected}
-            setSelected={(e) => setSelected(e)}
-            onExport={exportTo}
-            onSave={onSave}
-            onUndo={setUndo}
-            onRedo={setRedo}
-            enableUndo={canUndo}
-            enableRedo={canRedo}
-            onJoyrideStart={handleJoyrideStart}
-            ref={controlLayer}
-            closeNewDocumentModal={closeNewDocumentModal}
-            dataURL={dataURL}
-          />
-        </Container>
-        <Chart
-          ref={chart}
-          className="chart-layer"
-          data={data}
-          sendDataUp={onChange}
-          setSelected={(e) => {
-            setSelected(e);
+      <OpenDeskShell>
+        <Joyride
+          callback={handleJoyrideCallback}
+          continuous
+          run={run}
+          scrollToFirstStep
+          showProgress
+          showSkipButton
+          stepIndex={stepIndex}
+          steps={steps}
+          locale={{
+            back: "Zurück",
+            close: "Verlassen",
+            last: "Ende",
+            next: "Weiter",
+            skip: "Tour verlassen",
+          }}
+          styles={{
+            options: { primaryColor: "#132458" },
+            tooltip: {
+              borderRadius: ".2rem",
+            },
+            tooltipContainer: {
+              textAlign: "left",
+            },
+            tooltipTitle: {
+              margin: 0,
+            },
+            tooltipContent: {
+              padding: "1rem 0",
+            },
+            buttonNext: {
+              borderRadius: ".2rem",
+              color: "#fff",
+            },
+            buttonBack: {
+              marginRight: ".2rem",
+            },
           }}
         />
-      </DragDropContext>
+
+        <AlertModal
+          show={dataURL}
+          onHide={() => {
+            setDataURL(null);
+          }}
+          saveButton={"importieren"}
+          onSave={async () => {
+            const { error, data } = await getExternalData(dataURL);
+            console.log(error, data);
+            if (error) {
+              setImportError(error);
+            } else {
+              setDataURL(null);
+              setData(data);
+            }
+          }}
+          title="Externe Daten importieren"
+        >
+          Möchten Sie die Datei <b>{getFileNameFromURL(dataURL)}</b> von der
+          folgenden Quelle importieren?
+          <br></br> <br></br>
+          <i>{dataURL}</i>
+          <br></br> <br></br>
+        </AlertModal>
+
+        <AlertModal
+          show={droppedData}
+          onHide={() => {
+            setDroppedData(null);
+          }}
+          saveButton={"Importieren"}
+          onSave={() => {
+            onChange(droppedData);
+            setDroppedData(null);
+          }}
+          title="Dokument importieren"
+        >
+          Wenn Sie ein neues Dokument öffnen, gehen ungespeicherte Änderungen
+          an ihrem aktuellen Dokument verloren.
+        </AlertModal>
+
+        <AlertModal
+          show={dataUrlError}
+          onHide={() => {
+            setDataUrlError(null);
+          }}
+          title="Import Fehlgeschlagen"
+        >
+          <Alert variant="danger">
+            Möchten Sie eine externe URL laden? Sie haben über den Parameter
+            "dataurl" in der URL eine externe Quelle angegeben. Diese Quelle
+            ist fehlerhaft:
+            {dataUrlError?.map((error, i) => (
+              <div key={"error-" + i} className="my-2">
+                {error}
+              </div>
+            ))}
+            Bitte überprüfen Sie die URL.
+          </Alert>
+        </AlertModal>
+
+        <AlertModal
+          show={importError}
+          onHide={() => {
+            setImportError(null);
+          }}
+          title="Import Fehlgeschlagen"
+        >
+          <Alert variant="danger">
+            Beim öffnen der Datei ist ein Fehler aufgetreten:
+            {importError?.map((error, i) => (
+              <div key={"error-" + i} className="my-2">
+                {JSON.stringify(error, null, " ")}
+              </div>
+            ))}
+          </Alert>
+        </AlertModal>
+
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Container className="control-layer" fluid>
+            <Sidebar
+              data={data}
+              dsDigger={dsDigger}
+              sendDataUp={onChange}
+              selected={selected}
+              setSelected={(e) => setSelected(e)}
+              onExport={exportTo}
+              onSave={onSave}
+              onUndo={setUndo}
+              onRedo={setRedo}
+              enableUndo={canUndo}
+              enableRedo={canRedo}
+              onJoyrideStart={handleJoyrideStart}
+              ref={controlLayer}
+              closeNewDocumentModal={closeNewDocumentModal}
+              dataURL={dataURL}
+            />
+          </Container>
+          <Chart
+            ref={chart}
+            className="chart-layer"
+            data={data}
+            sendDataUp={onChange}
+            setSelected={(e) => {
+              setSelected(e);
+            }}
+          />
+        </DragDropContext>
+      </OpenDeskShell>
     </div>
   );
 };

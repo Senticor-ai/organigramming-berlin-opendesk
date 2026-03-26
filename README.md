@@ -13,6 +13,8 @@ integration path.
 - container image build via [Dockerfile](./Dockerfile)
 - Kubernetes manifests under [deploy/kustomize](./deploy/kustomize)
 - `oauth2-proxy` and Keycloak bootstrap helpers under [scripts](./scripts)
+- runtime-configured openDesk shell mode documented in
+  [docs/runtime-configuration.md](./docs/runtime-configuration.md)
 - openDesk integration notes in
   [docs/opendesk-integration.md](./docs/opendesk-integration.md)
 - upstream maintenance notes in [docs/upstream-sync.md](./docs/upstream-sync.md)
@@ -41,6 +43,9 @@ yarn start
 
 The concrete openDesk example overlay for the current cognitive-hive setup lives
 in [deploy/kustomize/overlays/cognitive-hive](./deploy/kustomize/overlays/cognitive-hive).
+
+The same image can also run without any openDesk-specific features. See
+[docs/runtime-configuration.md](./docs/runtime-configuration.md).
 
 **Notice: This application and the documentation is still a work in progress.**
 

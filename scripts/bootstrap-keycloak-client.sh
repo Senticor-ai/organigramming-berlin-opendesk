@@ -15,7 +15,9 @@ SECRET_NAME="${SECRET_NAME:-organigram-oauth2-proxy-secrets}"
 KEYCLOAK_ISSUER_URL="${KEYCLOAK_ISSUER_URL:-https://id.cognitive-hive.ai/realms/${KEYCLOAK_REALM}}"
 REDIRECT_URI="${REDIRECT_URI:-https://${PUBLIC_HOST}/oauth2/callback}"
 POST_LOGOUT_REDIRECT_URI="${POST_LOGOUT_REDIRECT_URI:-https://${PUBLIC_HOST}/}"
+PORTAL_POST_LOGOUT_REDIRECT_URI="${PORTAL_POST_LOGOUT_REDIRECT_URI:-https://portal.cognitive-hive.ai/univention/portal/}"
 WEB_ORIGIN="${WEB_ORIGIN:-https://${PUBLIC_HOST}}"
+FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL:-https://${PUBLIC_HOST}/oauth2/sign_out}"
 
 for required_bin in kubectl openssl base64; do
   if ! command -v "${required_bin}" >/dev/null 2>&1; then
@@ -61,7 +63,9 @@ CLIENT_SECRET="$(
     CLIENT_ID="${CLIENT_ID}" \
     REDIRECT_URI="${REDIRECT_URI}" \
     POST_LOGOUT_REDIRECT_URI="${POST_LOGOUT_REDIRECT_URI}" \
+    PORTAL_POST_LOGOUT_REDIRECT_URI="${PORTAL_POST_LOGOUT_REDIRECT_URI}" \
     WEB_ORIGIN="${WEB_ORIGIN}" \
+    FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL}" \
     bash -lc '
       set -euo pipefail
       KC=/opt/keycloak/bin/kcadm.sh
@@ -88,10 +92,13 @@ CLIENT_SECRET="$(
         "implicitFlowEnabled": false,
         "directAccessGrantsEnabled": false,
         "serviceAccountsEnabled": false,
+        "frontchannelLogout": true,
         "redirectUris": ["${REDIRECT_URI}"],
         "webOrigins": ["${WEB_ORIGIN}"],
         "attributes": {
-          "post.logout.redirect.uris": "${POST_LOGOUT_REDIRECT_URI}"
+          "frontchannel.logout.url": "${FRONTCHANNEL_LOGOUT_URL}",
+          "frontchannel.logout.session.required": "false",
+          "post.logout.redirect.uris": "${POST_LOGOUT_REDIRECT_URI}##${PORTAL_POST_LOGOUT_REDIRECT_URI}"
         }
       }
 EOF

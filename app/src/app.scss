@@ -15,6 +15,14 @@ body {
   overflow: hidden;
 }
 
+.App {
+  --organigram-shell-offset: 0px;
+}
+
+.App.App--opendesk {
+  --organigram-shell-offset: 4.75rem;
+}
+
 .btn {
   .person-name {
     float: left;
@@ -106,10 +114,10 @@ body {
 
 .control-layer {
   position: absolute;
-  height: 100vh;
+  height: calc(100vh - var(--organigram-shell-offset));
   width: 100vw;
   z-index: 100;
-  top: 0;
+  top: var(--organigram-shell-offset);
   left: 0;
   pointer-events: none;
   display: flex;
@@ -144,7 +152,7 @@ body {
     flex-basis: auto;
     opacity: 0;
     overflow: hidden;
-    max-height: calc(100vh - 5rem);
+    max-height: calc(100vh - var(--organigram-shell-offset) - 5rem);
     pointer-events: none;
     .sidebar {
       opacity: 0;

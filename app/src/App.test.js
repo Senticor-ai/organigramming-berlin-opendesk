@@ -1,8 +1,39 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render } from "@testing-library/react";
 
-test('renders learn react link', () => {
+jest.mock("./components/Chart/Chart", () => {
+  const React = require("react");
+
+  return React.forwardRef(() =>
+    React.createElement("div", { "data-testid": "mock-chart" })
+  );
+});
+
+jest.mock("./components/Sidebar/Sidebar", () => {
+  const React = require("react");
+
+  return React.forwardRef(() =>
+    React.createElement("div", { "data-testid": "mock-sidebar" })
+  );
+});
+
+jest.mock("./components/Sidebar/AlertModal", () => {
+  const React = require("react");
+
+  return ({ children, show }) =>
+    show ? React.createElement("div", null, children) : null;
+});
+
+jest.mock("./lib/getJoyrideSettings", () => ({
+  getJoyrideSettings: () => ({
+    run: false,
+    stepIndex: 0,
+    steps: [],
+  }),
+}));
+
+import App from "./App";
+
+test("renders the application shell", () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(document.querySelector(".App")).not.toBeNull();
 });

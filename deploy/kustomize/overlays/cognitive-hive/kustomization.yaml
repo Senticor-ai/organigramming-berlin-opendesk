@@ -4,6 +4,6 @@ resources:
   - ../../base
 patches:
   - path: patch-certificate.yaml
+  - path: patch-deployment.yaml
   - path: patch-ingress.yaml
   - path: patch-oauth2-proxy-deployment.yaml
-

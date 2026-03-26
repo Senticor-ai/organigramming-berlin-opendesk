@@ -21,7 +21,24 @@ spec:
     spec:
       containers:
         - name: organigram
-          image: ghcr.io/senticor-ai/organigramming-berlin-opendesk:latest
+          image: registry.onstackit.cloud/senticor/organigram:latest
+          env:
+            - name: ORGANIGRAM_OPENDESK_ENABLED
+              value: "false"
+            - name: ORGANIGRAM_OPENDESK_PORTAL_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_ICS_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_KEYCLOAK_ISSUER_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_OIDC_CLIENT_ID
+              value: "organigram"
+            - name: ORGANIGRAM_OPENDESK_POST_LOGOUT_REDIRECT_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_NAVIGATION_LANGUAGE
+              value: "de-DE"
+            - name: ORGANIGRAM_OPENDESK_SUITE_LABEL
+              value: "openDesk"
           ports:
             - containerPort: 8080
               name: http
@@ -44,4 +61,3 @@ spec:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 30
-

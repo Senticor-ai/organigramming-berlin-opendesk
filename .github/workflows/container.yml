@@ -10,11 +10,10 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: senticor000-github-runner
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -22,18 +21,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
+      - name: Log in to STACKIT registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: registry.onstackit.cloud
+          username: ${{ secrets.STACKIT_REGISTRY_USERNAME }}
+          password: ${{ secrets.STACKIT_REGISTRY_PASSWORD }}
 
       - name: Compute image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: registry.onstackit.cloud/senticor/organigram
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -48,4 +47,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-

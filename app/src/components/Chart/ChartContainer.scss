@@ -8,11 +8,11 @@
   position: fixed;
   display: flex;
   flex-direction: column;
-  top: 0;
+  top: var(--organigram-shell-offset, 0px);
   left: 0;
   /* margin: 10px; */
   min-height: 700px;
-  height: 100vh;
+  height: calc(100vh - var(--organigram-shell-offset, 0px));
   width: 100vw;
   background-color: $gray-300;
   overflow: hidden;

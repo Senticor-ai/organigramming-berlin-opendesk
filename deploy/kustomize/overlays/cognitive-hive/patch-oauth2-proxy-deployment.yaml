@@ -11,9 +11,11 @@ spec:
           args:
             - --provider=keycloak-oidc
             - --oidc-issuer-url=https://id.cognitive-hive.ai/realms/opendesk
+            - --code-challenge-method=S256
             - --scope=openid profile email
             - --insecure-oidc-allow-unverified-email=true
             - --email-domain=*
+            - --whitelist-domain=.cognitive-hive.ai
             - --upstream=http://organigram.organigram.svc.cluster.local:80
             - --http-address=0.0.0.0:4180
             - --redirect-url=https://organigram.cognitive-hive.ai/oauth2/callback
