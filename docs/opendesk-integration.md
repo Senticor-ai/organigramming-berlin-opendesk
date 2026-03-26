@@ -77,6 +77,11 @@ This creates or updates:
 - Keycloak confidential client `organigram`
 - Kubernetes secret `organigram/organigram-oauth2-proxy-secrets`
 
+The example `oauth2-proxy` configuration in this repo also enables
+`--insecure-oidc-allow-unverified-email=true`. That is intentional for openDesk
+realms where users may receive an `email` claim without `email_verified=true`;
+without it, the OAuth callback can fail with HTTP 500.
+
 ## Apply the manifests
 
 The cognitive-hive overlay is the concrete example for the current openDesk
@@ -113,4 +118,3 @@ In the Nubus portal editor add a tile that points to the companion host:
 - working state is still stored in the browser until users export files
 - Nextcloud, xWiki, and other openDesk integrations are not part of this fork
 - direct host access is SSO-gated, but the application itself stays stateless
-
