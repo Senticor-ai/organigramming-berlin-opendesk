@@ -91,6 +91,26 @@ const getInitials = (value) => {
   return parts.map((part) => part[0]?.toUpperCase() || "").join("");
 };
 
+const getIdentityTitle = (displayName, email) => {
+  if (displayName && email) {
+    return `${displayName} · ${email}`;
+  }
+
+  return displayName || email || "";
+};
+
+const getPortalLogoUrl = (portalUrl) => {
+  if (!portalUrl) {
+    return "";
+  }
+
+  try {
+    return new URL("/univention/portal/icons/logos/domain.svg", portalUrl).toString();
+  } catch (error) {
+    return "";
+  }
+};
+
 const OpenDeskShell = ({ children }) => {
   const { opendesk } = runtimeConfig;
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -182,11 +202,28 @@ const OpenDeskShell = ({ children }) => {
   const userDisplayName = context?.user?.displayName || "";
   const userEmail = context?.user?.email || "";
   const userInitials = getInitials(userDisplayName || userEmail);
+  const identityTitle = getIdentityTitle(userDisplayName, userEmail);
+  const portalLogoUrl = getPortalLogoUrl(opendesk.portalUrl);
 
   return (
     <div className="opendesk-shell">
       <header className="opendesk-shell__header">
         <div className="opendesk-shell__brand">
+          {opendesk.portalUrl ? (
+            <a className="opendesk-shell__wordmark" href={opendesk.portalUrl}>
+              {portalLogoUrl ? (
+                <img
+                  className="opendesk-shell__wordmark-image"
+                  src={portalLogoUrl}
+                  alt={opendesk.suiteLabel}
+                />
+              ) : (
+                opendesk.suiteLabel
+              )}
+            </a>
+          ) : (
+            <span className="opendesk-shell__wordmark">{opendesk.suiteLabel}</span>
+          )}
           <button
             type="button"
             className="opendesk-shell__waffle"
@@ -198,15 +235,6 @@ const OpenDeskShell = ({ children }) => {
               <span key={`waffle-dot-${index}`} />
             ))}
           </button>
-          <div className="opendesk-shell__brand-mark" aria-hidden="true">
-            {[...Array(4)].map((_, index) => (
-              <span key={`brand-dot-${index}`} />
-            ))}
-          </div>
-          <div className="opendesk-shell__titles">
-            <span className="opendesk-shell__suite-label">{opendesk.suiteLabel}</span>
-            <span className="opendesk-shell__title">Organigramme</span>
-          </div>
         </div>
 
         <div className="opendesk-shell__actions">
@@ -224,19 +252,9 @@ const OpenDeskShell = ({ children }) => {
             </a>
           )}
           {(userDisplayName || userEmail) && (
-            <div className="opendesk-shell__identity">
+            <div className="opendesk-shell__identity" title={identityTitle}>
               <span className="opendesk-shell__identity-avatar" aria-hidden="true">
                 {userInitials}
-              </span>
-              <span className="opendesk-shell__identity-copy">
-                {userDisplayName && (
-                  <span className="opendesk-shell__identity-name">
-                    {userDisplayName}
-                  </span>
-                )}
-                {userEmail && (
-                  <span className="opendesk-shell__identity-email">{userEmail}</span>
-                )}
               </span>
             </div>
           )}

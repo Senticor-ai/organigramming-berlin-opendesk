@@ -2,7 +2,7 @@
 @import "../theme";
 
 .opendesk-shell {
-  --organigram-shell-offset: 4.5rem;
+  --organigram-shell-offset: 3.95rem;
   min-height: 100vh;
 }
 
@@ -19,20 +19,37 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
+  gap: 1rem;
   min-height: var(--organigram-shell-offset);
-  padding: 0.7rem 1.25rem;
+  padding: 0.45rem 1.1rem;
   background: rgba($white, 0.98);
   border-bottom: 1px solid rgba($gray-400, 0.55);
-  box-shadow: 0 8px 22px rgba($gray-800, 0.08);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba($gray-800, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .opendesk-shell__brand {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.85rem;
   min-width: 0;
+}
+
+.opendesk-shell__wordmark {
+  display: inline-flex;
+  align-items: center;
+  color: $gray-900;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.opendesk-shell__wordmark-image {
+  display: block;
+  width: 5.15rem;
+  height: auto;
 }
 
 .opendesk-shell__waffle {
@@ -41,11 +58,11 @@
   gap: 0.28rem;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.3rem;
+  height: 2.3rem;
   padding: 0;
   border: 1px solid rgba($gray-400, 0.6);
-  border-radius: 0.8rem;
+  border-radius: 0.7rem;
   background: rgba($gray-100, 0.92);
   transition:
     border-color 160ms ease,
@@ -64,50 +81,10 @@
   border-color: rgba($primary, 0.35);
 }
 
-.opendesk-shell__brand-mark {
-  display: grid;
-  grid-template-columns: repeat(2, 0.46rem);
-  gap: 0.22rem;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0.18rem;
-  border-radius: 0.7rem;
-  background: linear-gradient(135deg, rgba($primary, 0.14), rgba($secondary, 0.12));
-
-  span {
-    width: 0.46rem;
-    height: 0.46rem;
-    border-radius: 999px;
-    background: linear-gradient(135deg, $primary, $secondary);
-  }
-}
-
-.opendesk-shell__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  min-width: 0;
-}
-
-.opendesk-shell__suite-label {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: $gray-900;
-}
-
-.opendesk-shell__title {
-  color: $gray-700;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .opendesk-shell__actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem 0.85rem;
+  gap: 0.35rem 0.8rem;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -115,53 +92,34 @@
 .opendesk-shell__identity {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  padding-left: 0.2rem;
+  justify-content: center;
 }
 
 .opendesk-shell__identity-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, $primary, $secondary);
-  color: $white;
-  font-size: 0.78rem;
+  background: rgba($primary, 0.12);
+  color: $primary;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-}
-
-.opendesk-shell__identity-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.opendesk-shell__identity-name {
-  color: $gray-900;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.opendesk-shell__identity-email {
-  color: $gray-600;
-  font-size: 0.78rem;
-  font-weight: 500;
 }
 
 .opendesk-shell__action-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.35rem;
+  min-height: 2.2rem;
   padding: 0.35rem 0;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: $gray-700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
   transition:
@@ -300,7 +258,7 @@
 
 @media (max-width: 768px) {
   .opendesk-shell {
-    --organigram-shell-offset: 6.4rem;
+    --organigram-shell-offset: 5.6rem;
   }
 
   .opendesk-shell__header {
@@ -314,8 +272,7 @@
   }
 
   .opendesk-shell__identity {
-    order: 10;
-    width: 100%;
+    order: 9;
   }
 
   .opendesk-shell__switcher {
