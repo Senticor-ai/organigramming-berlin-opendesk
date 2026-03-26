@@ -23,7 +23,8 @@ All variables are optional.
 | `ORGANIGRAM_OPENDESK_SUITE_LABEL` | `openDesk` | Label shown in the shell header |
 | `ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL` | `http://ums-portal-server.opendesk.svc.cluster.local/portal` | In-cluster Central Navigation API base URL |
 | `ORGANIGRAM_OPENDESK_CENTRAL_NAVIGATION_SHARED_SECRET` | empty | Shared secret for the Central Navigation API |
-| `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL` | empty | Base URL of the openDesk Nextcloud deployment |
+| `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL` | empty | Public Nextcloud URL used for UI links |
+| `ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL` | empty | Server-side Nextcloud WebDAV base URL; falls back to `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL` when unset |
 | `ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER` | `Organigramme` | User folder for JSON save/open |
 | `ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM` | `opendesk_useruuid` | OIDC claim used to build the Nextcloud WebDAV principal path |
 
@@ -45,7 +46,10 @@ All variables are optional.
 
 In the openDesk reference setup, the server-side Nextcloud bridge uses the
 `opendesk_useruuid` claim and the `opendesk-nextcloud-scope` client scope that
-the Keycloak bootstrap attaches to the `organigram` client.
+the Keycloak bootstrap attaches to the `organigram` client. The recommended
+deployment sets `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL` to the public files host
+and `ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL` to the in-cluster Nextcloud
+service, so browser links and server-side DAV traffic use the right endpoints.
 
 ## What openDesk mode does not solve yet
 

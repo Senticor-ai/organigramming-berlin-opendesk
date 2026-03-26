@@ -128,12 +128,17 @@ The cognitive-hive overlay is the concrete example for the current openDesk
 installation:
 
 ```bash
+export STACKIT_REGISTRY_USERNAME=...
+export STACKIT_REGISTRY_PASSWORD=...
 ./scripts/apply-opendesk.sh
 ```
 
 Manual apply is also fine:
 
 ```bash
+export STACKIT_REGISTRY_USERNAME=...
+export STACKIT_REGISTRY_PASSWORD=...
+./scripts/bootstrap-registry-secret.sh
 kubectl apply -k deploy/kustomize/overlays/cognitive-hive
 ```
 
@@ -145,6 +150,7 @@ The overlay enables the runtime shell mode with:
 - `ORGANIGRAM_OPENDESK_POST_LOGOUT_REDIRECT_URL=https://portal.cognitive-hive.ai/univention/portal/`
 - `ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL=http://ums-portal-server.opendesk.svc.cluster.local/portal`
 - `ORGANIGRAM_OPENDESK_NEXTCLOUD_URL=https://drive.cognitive-hive.ai`
+- `ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL=http://opendesk-nextcloud-aio.opendesk.svc.cluster.local`
 - `ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER=Organigramme`
 - `ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM=opendesk_useruuid`
 
@@ -171,5 +177,6 @@ The infra repo that consumes this fork automates both through UDM.
 
 - working state is still cached in the browser between edits
 - JSON save/open is integrated with Nextcloud, but PDF/PNG/SVG/RDF still use browser downloads
+- the reference deployment should split the public Nextcloud link from the server-side DAV endpoint
 - the shell is integrated, but the app is not embedded into the Nubus portal frontend itself
 - the Provisioning API is not used yet; it is a likely next step for directory-driven templates or org-sync features

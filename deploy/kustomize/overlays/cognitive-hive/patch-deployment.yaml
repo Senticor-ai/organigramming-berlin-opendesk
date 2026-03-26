@@ -27,6 +27,8 @@ spec:
               value: "http://ums-portal-server.opendesk.svc.cluster.local/portal"
             - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_URL
               value: "https://drive.cognitive-hive.ai"
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL
+              value: "http://opendesk-nextcloud-aio.opendesk.svc.cluster.local"
             - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER
               value: "Organigramme"
             - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM

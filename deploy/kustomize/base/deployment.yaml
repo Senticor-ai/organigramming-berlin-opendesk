@@ -19,6 +19,8 @@ spec:
         app.kubernetes.io/component: frontend
         app.kubernetes.io/part-of: organigram-opendesk
     spec:
+      imagePullSecrets:
+        - name: stackit-registry
       containers:
         - name: organigram
           image: registry.onstackit.cloud/senticor/organigram:latest
@@ -40,6 +42,8 @@ spec:
             - name: ORGANIGRAM_OPENDESK_PORTAL_SERVER_URL
               value: ""
             - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_URL
+              value: ""
+            - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL
               value: ""
             - name: ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER
               value: "Organigramme"

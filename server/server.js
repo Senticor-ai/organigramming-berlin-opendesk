@@ -239,7 +239,9 @@ function sanitizeFileName(fileName) {
 }
 
 function getNextcloudRootUrl(principal) {
-  const nextcloudUrl = runtimeConfig.opendesk.nextcloudUrl;
+  const nextcloudUrl =
+    normalizeUrl(process.env.ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL, true) ||
+    runtimeConfig.opendesk.nextcloudUrl;
   if (!nextcloudUrl) {
     throw new Error("Nextcloud URL is not configured");
   }
