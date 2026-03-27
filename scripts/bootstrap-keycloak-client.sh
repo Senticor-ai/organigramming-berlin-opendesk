@@ -20,6 +20,7 @@ WEB_ORIGIN="${WEB_ORIGIN:-https://${PUBLIC_HOST}}"
 FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL:-https://${PUBLIC_HOST}/oauth2/sign_out}"
 NEXTCLOUD_CLIENT_SCOPE_NAME="${NEXTCLOUD_CLIENT_SCOPE_NAME:-opendesk-nextcloud-scope}"
 NEXTCLOUD_AUDIENCE_CLIENT_ID="${NEXTCLOUD_AUDIENCE_CLIENT_ID:-opendesk-nextcloud}"
+ROTATE_COOKIE_SECRET="${ROTATE_COOKIE_SECRET:-false}"
 
 for required_bin in kubectl openssl base64; do
   if ! command -v "${required_bin}" >/dev/null 2>&1; then
@@ -52,6 +53,10 @@ COOKIE_SECRET="$(
   kubectl -n "${NAMESPACE}" get secret "${SECRET_NAME}" \
     -o jsonpath='{.data.cookie-secret}' 2>/dev/null | base64 --decode || true
 )"
+
+if [[ "${ROTATE_COOKIE_SECRET,,}" == "1" || "${ROTATE_COOKIE_SECRET,,}" == "true" || "${ROTATE_COOKIE_SECRET,,}" == "yes" ]]; then
+  COOKIE_SECRET=""
+fi
 
 if [[ -z "${COOKIE_SECRET}" ]]; then
   COOKIE_SECRET="$(openssl rand -base64 32 | tr -d '\n')"

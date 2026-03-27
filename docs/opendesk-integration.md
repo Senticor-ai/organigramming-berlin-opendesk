@@ -103,12 +103,17 @@ without it, the OAuth callback can fail with HTTP 500.
 It also enables:
 
 - `--code-challenge-method=S256`
+- `--cookie-refresh=5m` so long-lived sessions refresh their access token
 - `--whitelist-domain=.cognitive-hive.ai` in the concrete overlay so logout
   redirects can pass through Keycloak and back to the portal
 - `--pass-access-token=true`
 - `--pass-user-headers=true`
 
 The access token passthrough is required for the server-side Nextcloud proxy.
+
+For break-the-session auth changes, the bootstrap helper can also rotate the
+companion app `oauth2-proxy` cookie secret with `ROTATE_COOKIE_SECRET=true` to
+force a fresh login for that specific app.
 
 ## Bootstrap Central Navigation access
 

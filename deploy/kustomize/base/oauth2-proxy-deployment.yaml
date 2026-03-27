@@ -36,6 +36,7 @@ spec:
             - --cookie-domain=.example.com
             - --cookie-secure=true
             - --cookie-samesite=lax
+            - --cookie-refresh=5m
             - --reverse-proxy=true
             - --skip-provider-button=true
             - --pass-access-token=true
