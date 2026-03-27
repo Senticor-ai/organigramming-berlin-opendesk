@@ -12,6 +12,9 @@ an openDesk/Nubus environment:
 - a feature-flagged openDesk shell mode in the frontend
 - a portal tile pointing to the public host
 
+For the maintenance contract of this fork, see
+[opendesk-maintainers-guide.md](./opendesk-maintainers-guide.md).
+
 ## Architecture
 
 The integration model is no longer just a plain tile link:
@@ -180,3 +183,13 @@ The infra repo that consumes this fork automates both through UDM.
 - the reference deployment should split the public Nextcloud link from the server-side DAV endpoint
 - the shell is integrated, but the app is not embedded into the Nubus portal frontend itself
 - the Provisioning API is not used yet; it is a likely next step for directory-driven templates or org-sync features
+
+## Maintenance
+
+The fork now follows a stricter maintenance boundary:
+
+- openDesk-specific work should stay in `server/`, `app/src/integration/`,
+  `deploy/`, `scripts/`, and `docs/`
+- standalone mode must keep working when `ORGANIGRAM_OPENDESK_ENABLED=false`
+- changes to the runtime APIs or shell behavior should be reflected in
+  [opendesk-maintainers-guide.md](./opendesk-maintainers-guide.md)

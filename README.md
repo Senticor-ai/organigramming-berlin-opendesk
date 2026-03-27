@@ -18,6 +18,8 @@ integration path.
   [docs/runtime-configuration.md](./docs/runtime-configuration.md)
 - openDesk integration notes in
   [docs/opendesk-integration.md](./docs/opendesk-integration.md)
+- maintainer boundary and release checklist in
+  [docs/opendesk-maintainers-guide.md](./docs/opendesk-maintainers-guide.md)
 - upstream maintenance notes in [docs/upstream-sync.md](./docs/upstream-sync.md)
 
 In openDesk mode the fork now supports:
