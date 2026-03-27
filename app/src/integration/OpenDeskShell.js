@@ -194,6 +194,18 @@ const OpenDeskShell = ({ children }) => {
     opendesk.navigationLanguage,
   ]);
 
+  useEffect(() => {
+    if (!opendesk.enabled) {
+      return undefined;
+    }
+
+    document.body.classList.add("organigram-opendesk");
+
+    return () => {
+      document.body.classList.remove("organigram-opendesk");
+    };
+  }, [opendesk.enabled]);
+
   if (!opendesk.enabled) {
     return children;
   }

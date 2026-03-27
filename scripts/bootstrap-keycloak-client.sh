@@ -19,6 +19,7 @@ PORTAL_POST_LOGOUT_REDIRECT_URI="${PORTAL_POST_LOGOUT_REDIRECT_URI:-https://port
 WEB_ORIGIN="${WEB_ORIGIN:-https://${PUBLIC_HOST}}"
 FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL:-https://${PUBLIC_HOST}/oauth2/sign_out}"
 NEXTCLOUD_CLIENT_SCOPE_NAME="${NEXTCLOUD_CLIENT_SCOPE_NAME:-opendesk-nextcloud-scope}"
+NEXTCLOUD_AUDIENCE_CLIENT_ID="${NEXTCLOUD_AUDIENCE_CLIENT_ID:-opendesk-nextcloud}"
 
 for required_bin in kubectl openssl base64; do
   if ! command -v "${required_bin}" >/dev/null 2>&1; then
@@ -68,6 +69,7 @@ CLIENT_SECRET="$(
     WEB_ORIGIN="${WEB_ORIGIN}" \
     FRONTCHANNEL_LOGOUT_URL="${FRONTCHANNEL_LOGOUT_URL}" \
     NEXTCLOUD_CLIENT_SCOPE_NAME="${NEXTCLOUD_CLIENT_SCOPE_NAME}" \
+    NEXTCLOUD_AUDIENCE_CLIENT_ID="${NEXTCLOUD_AUDIENCE_CLIENT_ID}" \
     bash -lc '
       set -euo pipefail
       KC=/opt/keycloak/bin/kcadm.sh
@@ -126,6 +128,20 @@ EOF
           -s '"'"'config."included.client.audience"='"'"'"${CLIENT_ID}" \
           -s '"'"'config."id.token.claim"=true'"'"' \
           -s '"'"'config."access.token.claim"=true'"'"' >/dev/null
+      fi
+
+      if [[ -n "${NEXTCLOUD_AUDIENCE_CLIENT_ID}" ]]; then
+        mapper_name="audience-${NEXTCLOUD_AUDIENCE_CLIENT_ID}"
+        if ! "${KC}" get "clients/${client_uuid}/protocol-mappers/models" -r "${KEYCLOAK_REALM}" \
+          --fields name | grep -Fq "\"${mapper_name}\""; then
+          "${KC}" create "clients/${client_uuid}/protocol-mappers/models" -r "${KEYCLOAK_REALM}" \
+            -s name="${mapper_name}" \
+            -s protocol=openid-connect \
+            -s protocolMapper=oidc-audience-mapper \
+            -s '"'"'config."included.client.audience"='"'"'"${NEXTCLOUD_AUDIENCE_CLIENT_ID}" \
+            -s '"'"'config."id.token.claim"=false'"'"' \
+            -s '"'"'config."access.token.claim"=true'"'"' >/dev/null
+        fi
       fi
 
       nextcloud_scope_uuid="$(

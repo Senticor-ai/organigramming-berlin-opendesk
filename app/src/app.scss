@@ -15,12 +15,38 @@ body {
   overflow: hidden;
 }
 
+:root {
+  --organigram-shell-offset: 0px;
+}
+
 .App {
   --organigram-shell-offset: 0px;
 }
 
 .App.App--opendesk {
   --organigram-shell-offset: 4.75rem;
+}
+
+body.organigram-opendesk {
+  --organigram-shell-offset: 3.95rem;
+}
+
+body.organigram-opendesk .modal-backdrop {
+  z-index: 1290;
+}
+
+body.organigram-opendesk .modal {
+  z-index: 1300;
+}
+
+body.organigram-opendesk .modal.show .modal-dialog {
+  margin-top: calc(var(--organigram-shell-offset) + 1rem);
+}
+
+@media (max-width: 768px) {
+  body.organigram-opendesk .modal.show .modal-dialog {
+    margin-top: calc(var(--organigram-shell-offset) + 0.5rem);
+  }
 }
 
 .btn {

@@ -92,6 +92,8 @@ The bootstrap now configures the client for:
 - post-logout redirects to both the organigram host and the portal URL
 - the default client scope `opendesk-nextcloud-scope` so bearer tokens include
   `opendesk_useruuid` for Nextcloud WebDAV access
+- an extra audience mapper for `opendesk-nextcloud`, because Nextcloud bearer
+  validation checks the token audience against its own OIDC client id
 
 The example `oauth2-proxy` configuration in this repo also enables
 `--insecure-oidc-allow-unverified-email=true`. That is intentional for openDesk
