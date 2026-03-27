@@ -15,12 +15,22 @@ const Chart = forwardRef(({ data, update, sendDataUp, setSelected }, ref) => {
   const orgchart = useRef();
 
   useImperativeHandle(ref, () => ({
-    exportTo: (fileName, fileextension, includeLogo, vectorPdf) => {
-      orgchart.current.exportTo(
+    buildExportFile: (fileName, fileextension, includeLogo, data, pdfType) => {
+      return orgchart.current.buildExportFile(
         fileName,
         fileextension,
         includeLogo,
-        vectorPdf
+        data,
+        pdfType
+      );
+    },
+    exportTo: (fileName, fileextension, includeLogo, data, pdfType) => {
+      return orgchart.current.exportTo(
+        fileName,
+        fileextension,
+        includeLogo,
+        data,
+        pdfType
       );
     },
     demoContexMenu: (enable, nodeId = "") => {

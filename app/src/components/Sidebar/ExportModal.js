@@ -18,6 +18,7 @@ const ExportModal = (props) => {
   const [duplicatePersons, setDuplicatePersons] = useState([]);
   const [nextcloudError, setNextcloudError] = useState(null);
   const [nextcloudSaving, setNextcloudSaving] = useState(false);
+  const [localExporting, setLocalExporting] = useState(false);
 
   const properties = {
     properties: {
@@ -97,42 +98,54 @@ const ExportModal = (props) => {
     },
   };
 
-  const onExport = () => {
+  const onExport = async () => {
     onBlur();
-    console.log("formData", formData);
-    if (formData.export.saveExport === "save") {
-      props.onSave(true);
-    } else {
-      switch (formData.export.exportType) {
-        case "svg":
-          props.onExport("svg", formData.export.includeLogo);
-          break;
-        case "png":
-          props.onExport("png", formData.export.includeLogo);
-          break;
-        case "rdf":
-          props.onExport("rdf", false, false, formData.export.rdfType);
-          break;
-        case "json":
-          props.onSave(formData.export.includeLogo,formData.export?.excludePersonalData);
-          break;
-        default:
-          // if (formData.export.pdfType === "print") {
-          //   document.title = formData.export.filename;
-          //   setTimeout(() => {
-          //     window.print();
-          //   }, 500);
-          // } else {
-          props.onExport(
-            "pdf",
-            formData.export.includeLogo,
-            formData.export.pdfType
-          );
-          // }
-          break;
+    setNextcloudError(null);
+    setLocalExporting(true);
+
+    try {
+      if (formData.export.saveExport === "save") {
+        await props.onSave(
+          formData.export.includeLogo,
+          formData.export?.excludePersonalData,
+          formData
+        );
+        props.onHide();
+      } else {
+        switch (formData.export.exportType) {
+          case "svg":
+            await props.onExport("svg", formData.export.includeLogo, "", formData);
+            break;
+          case "png":
+            await props.onExport("png", formData.export.includeLogo, "", formData);
+            break;
+          case "rdf":
+            await props.onExport("rdf", false, formData.export.rdfType, formData);
+            break;
+          case "json":
+            await props.onSave(
+              formData.export.includeLogo,
+              formData.export?.excludePersonalData,
+              formData
+            );
+            break;
+          default:
+            await props.onExport(
+              "pdf",
+              formData.export.includeLogo,
+              formData.export.pdfType,
+              formData
+            );
+            break;
+        }
+
+        props.onHide();
       }
+    } catch (error) {
+      setNextcloudError(error.message);
+    } finally {
+      setLocalExporting(false);
     }
-    props.onHide();
   };
 
   const onSaveToNextcloud = async () => {
@@ -143,8 +156,67 @@ const ExportModal = (props) => {
       onBlur();
       await props.onSaveToNextcloud(
         formData.export.includeLogo,
-        formData.export?.excludePersonalData
+        formData.export?.excludePersonalData,
+        formData
       );
+      props.onHide();
+    } catch (error) {
+      setNextcloudError(error.message);
+    } finally {
+      setNextcloudSaving(false);
+    }
+  };
+
+  const onExportToNextcloud = async () => {
+    setNextcloudError(null);
+    setNextcloudSaving(true);
+
+    try {
+      onBlur();
+
+      switch (formData.export.exportType) {
+        case "svg":
+          await props.onExportToNextcloud(
+            "svg",
+            formData.export.includeLogo,
+            "",
+            formData
+          );
+          break;
+        case "png":
+          await props.onExportToNextcloud(
+            "png",
+            formData.export.includeLogo,
+            "",
+            formData
+          );
+          break;
+        case "rdf":
+          await props.onExportToNextcloud(
+            "rdf",
+            false,
+            formData.export.rdfType,
+            formData
+          );
+          break;
+        case "json":
+          await props.onExportToNextcloud(
+            "json",
+            formData.export.includeLogo,
+            "",
+            formData
+          );
+          break;
+        default:
+          await props.onExportToNextcloud(
+            "pdf",
+            formData.export.includeLogo,
+            formData.export.pdfType,
+            formData
+          );
+          break;
+      }
+
       props.onHide();
     } catch (error) {
       setNextcloudError(error.message);
@@ -292,18 +364,43 @@ const ExportModal = (props) => {
             <Button
               variant="outline-primary"
               onClick={onSaveToNextcloud}
-              disabled={nextcloudSaving}
+              disabled={nextcloudSaving || localExporting}
             >
               {nextcloudSaving ? "Speichert..." : "In Nextcloud speichern"}
             </Button>
           )}
+        {runtimeConfig.opendesk.enabled &&
+          runtimeConfig.opendesk.nextcloudUrl &&
+          formData &&
+          formData.export &&
+          formData.export.saveExport === "export" && (
+            <Button
+              variant="outline-primary"
+              onClick={onExportToNextcloud}
+              disabled={nextcloudSaving || localExporting}
+            >
+              {nextcloudSaving
+                ? "Exportiert..."
+                : "Export in Nextcloud speichern"}
+            </Button>
+          )}
         <Button
           onClick={onExport}
-          disabled={showRDFInfo && warningMultiMainOrgs}
+          disabled={
+            (showRDFInfo && warningMultiMainOrgs) ||
+            nextcloudSaving ||
+            localExporting
+          }
         >
-          {formData &&
-          formData.export &&
-          formData.export.saveExport === "export"
+          {localExporting
+            ? formData &&
+              formData.export &&
+              formData.export.saveExport === "export"
+              ? "Exportiert..."
+              : "Speichert..."
+            : formData &&
+              formData.export &&
+              formData.export.saveExport === "export"
             ? "Exportieren"
             : "Speichern"}
         </Button>

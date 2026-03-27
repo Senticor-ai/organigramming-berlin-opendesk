@@ -21,6 +21,7 @@ async function parseJsonResponse(response, fallbackMessage) {
 export async function fetchOpenDeskContext() {
   const response = await fetch("/api/opendesk/context", {
     credentials: "same-origin",
+    cache: "no-store",
   });
 
   return parseJsonResponse(response, "Kontext konnte nicht geladen werden.");
@@ -34,6 +35,7 @@ export async function fetchOpenDeskNavigation(language) {
 
   const response = await fetch(url.toString(), {
     credentials: "same-origin",
+    cache: "no-store",
   });
 
   return parseJsonResponse(
@@ -45,6 +47,7 @@ export async function fetchOpenDeskNavigation(language) {
 export async function listNextcloudDocuments() {
   const response = await fetch("/api/opendesk/nextcloud/documents", {
     credentials: "same-origin",
+    cache: "no-store",
   });
 
   return parseJsonResponse(
@@ -58,6 +61,7 @@ export async function loadNextcloudDocument(fileName) {
     `/api/opendesk/nextcloud/documents/${encodeURIComponent(fileName)}`,
     {
       credentials: "same-origin",
+      cache: "no-store",
     }
   );
 
@@ -83,5 +87,27 @@ export async function saveNextcloudDocument(fileName, payload) {
   return parseJsonResponse(
     response,
     "Das Dokument konnte nicht in Nextcloud gespeichert werden."
+  );
+}
+
+export async function saveNextcloudFile(fileName, payload, contentType) {
+  const response = await fetch(
+    `/api/opendesk/nextcloud/files/${encodeURIComponent(fileName)}`,
+    {
+      method: "PUT",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "X-Organigram-File-Content-Type":
+          contentType || "application/octet-stream",
+      },
+      body: payload,
+    }
+  );
+
+  return parseJsonResponse(
+    response,
+    "Die Exportdatei konnte nicht in Nextcloud gespeichert werden."
   );
 }

@@ -12,13 +12,14 @@ import MDEditor from "@uiw/react-md-editor";
 import rehypeSanitize from "rehype-sanitize";
 import { selectNodeService, formatDate } from "../../services/service";
 import JSONDigger from "../../services/jsonDigger";
-import { toPng, toBlob, toJpeg, toSvg } from "html-to-image";
+import { toBlob, toJpeg, toSvg } from "html-to-image";
 // import * as htmlToImage from "html-to-image";
 // import { elementToSVG, inlineResources } from "dom-to-svg";
 import jsPDF from "jspdf";
 import ChartNode from "./ChartNode";
 import "./ChartContainer.scss";
-import { exportRDF } from "../../services/exportRDF";
+import { buildRDFExportFile } from "../../services/exportRDF";
+import { blobFromDataUrl, downloadBlob } from "../../services/fileDownload";
 
 import "../../services/registerFiles";
 
@@ -28,6 +29,14 @@ const customSchema = {
     div: ["style"],
   },
 };
+
+function waitForPaint() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
 
 
 const propTypes = {
@@ -336,56 +345,35 @@ const ChartContainer = forwardRef(
       );
     };
 
-    const exportSVG = async (node, exportFilename, userView) => {
-      // resetViewHandler();
-      setTimeout(() => {
-        toSvg(node).then(function (dataUrl) {
-          download(dataUrl, exportFilename, "svg");
-          resetChart({
-            node,
-            userView,
-          });
-        });
-      }, 1000);
+    const exportSVG = async (node, exportFilename) => {
+      const dataUrl = await toSvg(node);
+      const blob = await blobFromDataUrl(dataUrl);
+
+      return {
+        blob,
+        contentType: blob.type || "image/svg+xml",
+        fileName: exportFilename + ".svg",
+      };
     };
 
-    const exportPDF = (node, exportFilename, userView) => {
+    const exportPDF = async (node, exportFilename) => {
       const boundingClientRect = node.getBoundingClientRect();
       const canvasWidth = Math.floor(boundingClientRect.width);
       const canvasHeight = Math.floor(boundingClientRect.height);
 
-      toJpeg(node, { quality: 1, pixelRatio: 3 }).then(
-        function (dataUrl) {
-          const doc = new jsPDF({
-            orientation: data.document.paperOrientation,
-            unit: "px",
-            format: [canvasWidth, canvasHeight],
-          });
-          doc.addImage(dataUrl, "JPEG", 0, 0, canvasWidth, canvasHeight);
-          doc.save(exportFilename + ".pdf");
+      const dataUrl = await toJpeg(node, { quality: 1, pixelRatio: 3 });
+      const doc = new jsPDF({
+        orientation: data.document.paperOrientation,
+        unit: "px",
+        format: [canvasWidth, canvasHeight],
+      });
+      doc.addImage(dataUrl, "JPEG", 0, 0, canvasWidth, canvasHeight);
 
-          resetChart({
-            node,
-            userView,
-          });
-        },
-        // on error
-        () => {
-          resetChart({
-            node,
-            userView,
-          });
-        }
-      );
-    };
-
-    const download = (href, exportFilename, exportFileExtension) => {
-      const link = document.createElement("a");
-      link.href = href;
-      link.download = exportFilename + "." + exportFileExtension;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      return {
+        blob: doc.output("blob"),
+        contentType: "application/pdf",
+        fileName: exportFilename + ".pdf",
+      };
     };
 
     const resetChart = ({ node, userView }) => {
@@ -402,103 +390,114 @@ const ChartContainer = forwardRef(
       setExporting(false);
     };
 
-    const exportPNG = (node, exportFilename, userView) => {
-      const isWebkit = "WebkitAppearance" in document.documentElement.style;
-      const isFf = !!window.sidebar;
-      const isEdge =
-        navigator.appName === "Microsoft Internet Explorer" ||
-        (navigator.appName === "Netscape" &&
-          navigator.appVersion.indexOf("Edge") > -1);
+    const exportPNG = async (node, exportFilename) => {
+      const blob = await toBlob(node, { quality: 1, pixelRatio: 3 });
 
-      // for old browser and not pdf export
-      if ((!isWebkit && !isFf) || isEdge) {
-        toBlob(node).then(
-          function (blob) {
-            window.navigator.msSaveBlob(blob, exportFilename + ".png");
-            resetChart({
-              node,
-              userView,
-            });
-          }, // on error
-          () => {
-            resetChart({
-              node,
-              userView,
-            });
-          }
+      if (!blob) {
+        throw new Error("PNG-Datei konnte nicht erzeugt werden.");
+      }
+
+      return {
+        blob,
+        contentType: blob.type || "image/png",
+        fileName: exportFilename + ".png",
+      };
+    };
+
+    const buildExportFile = async (
+      fileName,
+      fileextension,
+      includeLogo,
+      data,
+      pdfType
+    ) => {
+      setExporting(true);
+
+      selectNodeService.clearSelectedNodeInfo();
+      const exportFilename = fileName || "OrgChart";
+      const exportFileExtension = fileextension || "png";
+
+      const originalScrollLeft = container.current.scrollLeft;
+      container.current.scrollLeft = 0;
+      const originalScrollTop = container.current.scrollTop;
+      container.current.scrollTop = 0;
+      const canvas = chart.current.querySelector("#paper");
+      if (!includeLogo && data.document.logo) {
+        const logo = canvas.querySelector("#logo");
+        if (logo) {
+          logo.style.display = "none";
+        }
+      }
+
+      const node = chart.current.querySelector("#paper");
+      const userView = {
+        originalScrollLeft: originalScrollLeft,
+        originalScrollTop: originalScrollTop,
+        nodeBackground: node.style.background,
+        nodeTransform: node.style.transform,
+      };
+
+      if (
+        exportFileExtension === "svg" ||
+        exportFileExtension === "pdf" ||
+        exportFileExtension === "png"
+      ) {
+        node.style.background = "#fff";
+        node.style.transform = "";
+        node.style.scrollLeft = 0;
+        node.style.scrollTop = 0;
+      }
+
+      try {
+        await waitForPaint();
+
+        if (exportFileExtension === "svg") {
+          return await exportSVG(node, exportFilename);
+        }
+
+        if (exportFileExtension === "rdf") {
+          return await buildRDFExportFile(data);
+        }
+
+        if (exportFileExtension === "pdf") {
+          return await exportPDF(node, exportFilename, pdfType);
+        }
+
+        if (exportFileExtension === "png") {
+          return await exportPNG(node, exportFilename);
+        }
+
+        throw new Error(
+          `Dateiformat "${exportFileExtension}" wird nicht unterstützt.`
         );
-      } else {
-        //
-        toPng(node, { quality: 1, pixelRatio: 3 }).then(
-          function (dataUrl) {
-            download(dataUrl, exportFilename, "png");
-            resetChart({
-              node,
-              userView,
-            });
-          },
-          // on error
-          () => {
-            resetChart({
-              node,
-              userView,
-            });
-          }
-        );
+      } finally {
+        resetChart({
+          node,
+          userView,
+        });
       }
     };
 
     useImperativeHandle(ref, () => ({
-      exportTo: (fileName, fileextension, includeLogo, data, pdfType) => {
-        setExporting(true);
-
-        selectNodeService.clearSelectedNodeInfo();
-        const exportFilename = fileName || "OrgChart";
-        const exportFileExtension = fileextension || "png";
-
-        const originalScrollLeft = container.current.scrollLeft;
-        container.current.scrollLeft = 0;
-        const originalScrollTop = container.current.scrollTop;
-        container.current.scrollTop = 0;
-        const canvas = chart.current.querySelector("#paper");
-        if (!includeLogo && data.document.logo) {
-          const logo = canvas.querySelector("#logo");
-          if (logo) {
-            logo.style.display = "none";
-          }
-        }
-
-        const node = chart.current.querySelector("#paper");
-        const userView = {
-          originalScrollLeft: originalScrollLeft,
-          originalScrollTop: originalScrollTop,
-          nodeBackground: node.style.background,
-          nodeTransform: node.style.transform,
-        };
-
-        if (
-          exportFileExtension === "svg" ||
-          exportFileExtension === "pdf" ||
-          exportFileExtension === "png"
-        ) {
-          node.style.background = "#fff";
-          node.style.transform = "";
-          node.style.scrollLeft = 0;
-          node.style.scrollTop = 0;
-        }
-
-        if (exportFileExtension === "svg") {
-          exportSVG(node, exportFilename, userView, false).then(() => {
-            setExporting(false);
-          });
-        } else if (exportFileExtension === "rdf") {
-          exportRDF(data);
-          setExporting(false);
-        } else if (exportFileExtension === "pdf") {
-          exportPDF(node, exportFilename, userView);
-        } else if (exportFileExtension === "png") {
-          exportPNG(node, exportFilename, userView, exportFileExtension);
-        }
+      buildExportFile: (fileName, fileextension, includeLogo, data, pdfType) => {
+        return buildExportFile(
+          fileName,
+          fileextension,
+          includeLogo,
+          data,
+          pdfType
+        );
+      },
+      exportTo: async (fileName, fileextension, includeLogo, data, pdfType) => {
+        const exportFile = await buildExportFile(
+          fileName,
+          fileextension,
+          includeLogo,
+          data,
+          pdfType
+        );
+        downloadBlob(exportFile.blob, exportFile.fileName);
+        return exportFile;
       },
       resetViewHandler: () => {
         resetViewHandler();

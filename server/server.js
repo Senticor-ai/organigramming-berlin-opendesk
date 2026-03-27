@@ -60,6 +60,11 @@ function buildRuntimeConfig() {
     nextcloudFolder:
       (process.env.ORGANIGRAM_OPENDESK_NEXTCLOUD_FOLDER || "Organigramme").trim() ||
       "Organigramme",
+    nextcloudExportFolder:
+      (
+        process.env.ORGANIGRAM_OPENDESK_NEXTCLOUD_EXPORT_FOLDER ||
+        "Organigramme/Exporte"
+      ).trim() || "Organigramme/Exporte",
     nextcloudPrincipalClaim:
       (
         process.env.ORGANIGRAM_OPENDESK_NEXTCLOUD_PRINCIPAL_CLAIM ||
@@ -224,7 +229,14 @@ async function fetchNavigation(req) {
   return response.json();
 }
 
-function sanitizeFileName(fileName) {
+function sanitizePathSegment(segment) {
+  return String(segment || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function sanitizeDocumentFileName(fileName) {
   const baseName = String(fileName || "")
     .trim()
     .replace(/\.json$/i, "")
@@ -238,6 +250,20 @@ function sanitizeFileName(fileName) {
   return `${baseName}.json`;
 }
 
+function sanitizeStoredFileName(fileName) {
+  const parsed = path.posix.parse(String(fileName || "").trim());
+  const baseName = sanitizePathSegment(parsed.name);
+  const extension = parsed.ext
+    ? parsed.ext.replace(/[^a-zA-Z0-9.]+/g, "").toLowerCase()
+    : "";
+
+  if (!baseName) {
+    return `organigramm${extension || ".bin"}`;
+  }
+
+  return `${baseName}${extension}`;
+}
+
 function getNextcloudRootUrl(principal) {
   const nextcloudUrl =
     normalizeUrl(process.env.ORGANIGRAM_OPENDESK_NEXTCLOUD_API_URL, true) ||
@@ -249,8 +275,20 @@ function getNextcloudRootUrl(principal) {
   return `${nextcloudUrl}/remote.php/dav/files/${encodeURIComponent(principal)}`;
 }
 
+function normalizeNextcloudFolderPath(folderPath) {
+  return String(folderPath || "")
+    .split("/")
+    .map((segment) => sanitizePathSegment(segment))
+    .filter(Boolean)
+    .join("/");
+}
+
 function getNextcloudFolderPath() {
-  return runtimeConfig.opendesk.nextcloudFolder.replace(/^\/+|\/+$/g, "");
+  return normalizeNextcloudFolderPath(runtimeConfig.opendesk.nextcloudFolder);
+}
+
+function getNextcloudExportFolderPath() {
+  return normalizeNextcloudFolderPath(runtimeConfig.opendesk.nextcloudExportFolder);
 }
 
 function getNextcloudPrincipal(user) {
@@ -270,18 +308,29 @@ function getNextcloudPrincipal(user) {
   );
 }
 
-function buildNextcloudFolderUrl(user) {
+function buildNextcloudFolderUrl(user, folderPath = getNextcloudFolderPath()) {
   const root = getNextcloudRootUrl(getNextcloudPrincipal(user));
-  const folderPath = getNextcloudFolderPath();
-  return folderPath ? `${root}/${encodeURIComponent(folderPath)}` : root;
+  if (!folderPath) {
+    return root;
+  }
+
+  return folderPath
+    .split("/")
+    .filter(Boolean)
+    .reduce((url, segment) => {
+      return `${url}/${encodeURIComponent(segment)}`;
+    }, root);
 }
 
 function buildNextcloudDocumentUrl(user, fileName) {
   return `${buildNextcloudFolderUrl(user)}/${encodeURIComponent(fileName)}`;
 }
 
-async function ensureNextcloudFolder(user) {
-  const folderUrl = buildNextcloudFolderUrl(user);
+function buildNextcloudFileUrl(user, folderPath, fileName) {
+  return `${buildNextcloudFolderUrl(user, folderPath)}/${encodeURIComponent(fileName)}`;
+}
+
+async function ensureNextcloudCollection(user, folderUrl) {
   const response = await fetch(folderUrl, {
     method: "MKCOL",
     headers: {
@@ -297,6 +346,22 @@ async function ensureNextcloudFolder(user) {
   throw new Error(
     `Nextcloud MKCOL failed with ${response.status}: ${body.slice(0, 200)}`
   );
+}
+
+async function ensureNextcloudFolder(user, folderPath = getNextcloudFolderPath()) {
+  const normalizedFolderPath = normalizeNextcloudFolderPath(folderPath);
+
+  if (!normalizedFolderPath) {
+    return;
+  }
+
+  const rootUrl = getNextcloudRootUrl(getNextcloudPrincipal(user));
+  let currentUrl = rootUrl;
+
+  for (const segment of normalizedFolderPath.split("/")) {
+    currentUrl = `${currentUrl}/${encodeURIComponent(segment)}`;
+    await ensureNextcloudCollection(user, currentUrl);
+  }
 }
 
 function normalizeResponseList(multistatus) {
@@ -354,7 +419,8 @@ function parseNextcloudDocumentList(xmlBody, folderName) {
 async function listNextcloudDocuments(user) {
   await ensureNextcloudFolder(user);
 
-  const folderName = getNextcloudFolderPath();
+  const folderPath = getNextcloudFolderPath();
+  const folderName = folderPath.split("/").pop() || folderPath;
   const response = await fetch(buildNextcloudFolderUrl(user), {
     method: "PROPFIND",
     headers: {
@@ -402,9 +468,10 @@ async function loadNextcloudDocument(user, fileName) {
 }
 
 async function saveNextcloudDocument(user, fileName, payload) {
-  await ensureNextcloudFolder(user);
+  const folderPath = getNextcloudFolderPath();
+  await ensureNextcloudFolder(user, folderPath);
 
-  const response = await fetch(buildNextcloudDocumentUrl(user, fileName), {
+  const response = await fetch(buildNextcloudFileUrl(user, folderPath, fileName), {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${user.accessToken}`,
@@ -422,7 +489,35 @@ async function saveNextcloudDocument(user, fileName, payload) {
 
   return {
     fileName,
-    nextcloudFolder: getNextcloudFolderPath(),
+    nextcloudFolder: folderPath,
+    nextcloudUrl: runtimeConfig.opendesk.nextcloudUrl,
+  };
+}
+
+async function saveNextcloudFile(user, fileName, content, contentType) {
+  const folderPath = getNextcloudExportFolderPath();
+  const normalizedFileName = sanitizeStoredFileName(fileName);
+  await ensureNextcloudFolder(user, folderPath);
+
+  const response = await fetch(buildNextcloudFileUrl(user, folderPath, normalizedFileName), {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${user.accessToken}`,
+      "Content-Type": contentType || "application/octet-stream",
+    },
+    body: content,
+  });
+
+  const body = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      `Nextcloud PUT failed with ${response.status}: ${body.slice(0, 200)}`
+    );
+  }
+
+  return {
+    fileName: normalizedFileName,
+    nextcloudFolder: folderPath,
     nextcloudUrl: runtimeConfig.opendesk.nextcloudUrl,
   };
 }
@@ -440,6 +535,7 @@ app.get("/runtime-config.js", (_req, res) => {
 });
 
 app.get("/api/opendesk/context", requireOpenDesk, requireUser, (req, res) => {
+  res.set("Cache-Control", "no-store");
   res.json({
     user: {
       uid: req.user.uid,
@@ -451,6 +547,7 @@ app.get("/api/opendesk/context", requireOpenDesk, requireUser, (req, res) => {
       suiteLabel: runtimeConfig.opendesk.suiteLabel,
       nextcloudUrl: runtimeConfig.opendesk.nextcloudUrl,
       nextcloudFolder: runtimeConfig.opendesk.nextcloudFolder,
+      nextcloudExportFolder: runtimeConfig.opendesk.nextcloudExportFolder,
     },
   });
 });
@@ -458,6 +555,7 @@ app.get("/api/opendesk/context", requireOpenDesk, requireUser, (req, res) => {
 app.get("/api/opendesk/navigation", requireOpenDesk, requireUser, async (req, res) => {
   try {
     const navigation = await fetchNavigation(req);
+    res.set("Cache-Control", "no-store");
     res.json(navigation);
   } catch (error) {
     res.status(502).json({ error: error.message });
@@ -472,6 +570,7 @@ app.get(
   async (req, res) => {
     try {
       const documents = await listNextcloudDocuments(req.user);
+      res.set("Cache-Control", "no-store");
       res.json({
         folder: runtimeConfig.opendesk.nextcloudFolder,
         documents,
@@ -491,8 +590,9 @@ app.get(
     try {
       const data = await loadNextcloudDocument(
         req.user,
-        sanitizeFileName(req.params.fileName)
+        sanitizeDocumentFileName(req.params.fileName)
       );
+      res.set("Cache-Control", "no-store");
       res.json(data);
     } catch (error) {
       res.status(502).json({ error: error.message });
@@ -509,9 +609,35 @@ app.put(
     try {
       const result = await saveNextcloudDocument(
         req.user,
-        sanitizeFileName(req.params.fileName),
+        sanitizeDocumentFileName(req.params.fileName),
         req.body
       );
+      res.set("Cache-Control", "no-store");
+      res.json(result);
+    } catch (error) {
+      res.status(502).json({ error: error.message });
+    }
+  }
+);
+
+app.put(
+  "/api/opendesk/nextcloud/files/:fileName",
+  requireOpenDesk,
+  requireUser,
+  requireAccessToken,
+  express.raw({
+    limit: "50mb",
+    type: () => true,
+  }),
+  async (req, res) => {
+    try {
+      const result = await saveNextcloudFile(
+        req.user,
+        req.params.fileName,
+        req.body,
+        req.get("x-organigram-file-content-type") || req.get("content-type")
+      );
+      res.set("Cache-Control", "no-store");
       res.json(result);
     } catch (error) {
       res.status(502).json({ error: error.message });

@@ -24,6 +24,7 @@ const Sidebar = forwardRef(
       selected,
       setSelected,
       onExport,
+      onExportToNextcloud,
       onSave,
       onSaveToNextcloud,
       onUndo,
@@ -102,6 +103,7 @@ const Sidebar = forwardRef(
             data={data}
             sendDataUp={onChange}
             onExport={onExport}
+            onExportToNextcloud={onExportToNextcloud}
             onSave={onSave}
             onSaveToNextcloud={onSaveToNextcloud}
             onHide={() => setExportModalShow(false)}

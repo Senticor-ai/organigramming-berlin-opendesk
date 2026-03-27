@@ -10,6 +10,7 @@ import { convertJsonLdToTurtle } from "./convertJsonLdToTurtle";
 import typeVocabLookup from "./typeVocabLookup.json";
 import rdfVocab from "./rdfVocab.json";
 import getURI from "./getURI";
+import { downloadBlob } from "./fileDownload";
 
 const subClasses = {};
 
@@ -24,7 +25,7 @@ function buildTelephoneResource(telephone) {
   };
 }
 
-const downloadData = async (data, rdf) => {
+export const buildRDFExportFile = async (data, rdf) => {
   const fileName = data.export.filename || toSnakeCase(data.document.title);
   const rdfType = data.export.rdfType;
   const baseUri = data.export?.baseUri;
@@ -53,13 +54,11 @@ const downloadData = async (data, rdf) => {
     fileExtension = ".ttl";
   }
   const blob = new Blob([fileData], { type: fileType });
-  const href = await URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = href;
-  link.download = fileName + fileExtension;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  return {
+    blob,
+    contentType: fileType,
+    fileName: fileName + fileExtension,
+  };
 };
 
 function hasKeys(obj) {
@@ -300,7 +299,7 @@ function getOrgData(d, excludePersonalData, parentOrg = null, isMainOrg = false)
   return newOrgJSONLD;
 }
 
-export const exportRDF = (data) => {
+export const exportRDF = async (data) => {
   const excludePersonalData = data?.export?.excludePersonalData || false;
 
   // also pass the parent's JSON-LD node down the recursion.
@@ -407,5 +406,6 @@ export const exportRDF = (data) => {
     ],
   };
 
-  downloadData(data, rdf);
+  const exportFile = await buildRDFExportFile(data, rdf);
+  downloadBlob(exportFile.blob, exportFile.fileName);
 };

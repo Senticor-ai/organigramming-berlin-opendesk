@@ -27,7 +27,11 @@ import JSONDigger from "./services/jsonDigger";
 import { getJoyrideSettings } from "./lib/getJoyrideSettings";
 import OpenDeskShell from "./integration/OpenDeskShell";
 import runtimeConfig from "./integration/runtimeConfig";
-import { saveNextcloudDocument } from "./integration/opendeskApi";
+import {
+  saveNextcloudDocument,
+  saveNextcloudFile,
+} from "./integration/opendeskApi";
+import { downloadBlob } from "./services/fileDownload";
 
 const initdata = () => {
   let doc = initDocument;
@@ -122,28 +126,28 @@ const App = () => {
     setState({ run: true, stepIndex: 0 });
   };
 
-  const onSave = async (includeLogo = true, excludePersonalData = false) => {
-    const dataCopy = excludePersonalData ? removePersonProps(data) : data;
-    const fileName = dataCopy.export.filename || toSnakeCase(dataCopy.document.title);
+  const onSave = async (
+    includeLogo = true,
+    excludePersonalData = false,
+    sourceData = data
+  ) => {
+    const dataCopy = excludePersonalData ? removePersonProps(sourceData) : sourceData;
+    const fileName =
+      dataCopy.export.filename || toSnakeCase(dataCopy.document.title);
     const exportData = includeLogo
       ? { ...dataCopy }
       : { ...dataCopy, document: { ...dataCopy.document, logo: "" } };
-    const json = JSON.stringify(exportData);
+    const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
-    const href = await URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = fileName + ".json";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadBlob(blob, fileName + ".json");
   };
 
   const onSaveToNextcloud = async (
     includeLogo = true,
-    excludePersonalData = false
+    excludePersonalData = false,
+    sourceData = data
   ) => {
-    const dataCopy = excludePersonalData ? removePersonProps(data) : data;
+    const dataCopy = excludePersonalData ? removePersonProps(sourceData) : sourceData;
     const fileName =
       dataCopy.export.filename || toSnakeCase(dataCopy.document.title);
     const exportData = includeLogo
@@ -153,10 +157,63 @@ const App = () => {
     return saveNextcloudDocument(fileName, exportData);
   };
 
-  const exportTo = (fileextension, includeLogo = true, pdfType = "") => {
-    const fileName = data.export.filename || toSnakeCase(data.document.title);
+  const exportTo = async (
+    fileextension,
+    includeLogo = true,
+    pdfType = "",
+    sourceData = data
+  ) => {
+    const fileName =
+      sourceData.export.filename || toSnakeCase(sourceData.document.title);
 
-    chart.current.exportTo(fileName, fileextension, includeLogo, data, pdfType);
+    return chart.current.exportTo(
+      fileName,
+      fileextension,
+      includeLogo,
+      sourceData,
+      pdfType
+    );
+  };
+
+  const exportToNextcloud = async (
+    fileextension,
+    includeLogo = true,
+    pdfType = "",
+    sourceData = data
+  ) => {
+    const fileName =
+      sourceData.export.filename || toSnakeCase(sourceData.document.title);
+    let exportFile = null;
+
+    if (fileextension === "json") {
+      const dataCopy = sourceData.export?.excludePersonalData
+        ? removePersonProps(sourceData)
+        : sourceData;
+      const exportData = includeLogo
+        ? { ...dataCopy }
+        : { ...dataCopy, document: { ...dataCopy.document, logo: "" } };
+      exportFile = {
+        blob: new Blob([JSON.stringify(exportData, null, 2)], {
+          type: "application/json",
+        }),
+        contentType: "application/json",
+        fileName: fileName + ".json",
+      };
+    } else {
+      exportFile = await chart.current.buildExportFile(
+        fileName,
+        fileextension,
+        includeLogo,
+        sourceData,
+        pdfType
+      );
+    }
+
+    return saveNextcloudFile(
+      exportFile.fileName,
+      exportFile.blob,
+      exportFile.contentType
+    );
   };
 
   useMount(() => {
@@ -417,6 +474,7 @@ const App = () => {
               selected={selected}
               setSelected={(e) => setSelected(e)}
               onExport={exportTo}
+              onExportToNextcloud={exportToNextcloud}
               onSave={onSave}
               onSaveToNextcloud={onSaveToNextcloud}
               onUndo={setUndo}
